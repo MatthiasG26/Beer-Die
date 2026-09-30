@@ -1,0 +1,10 @@
+{
+  "appId": "com.matthiasg26.beerdie",
+  "appName": "Beer Die",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0c0e0f"
+  },
+  "backgroundColor": "#0c0e0f"
+}

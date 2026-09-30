@@ -134,6 +134,13 @@ input::placeholder{color:#7d8280}
 .acct{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
 .acct .linkbtn{padding:0;font-size:12px}
 
+.sel{-webkit-user-select:text;user-select:text;color:var(--text)}
+.rules a,.auth-foot a{color:var(--gold)}
+.auth-foot{text-align:center}
+.log p.theirs{cursor:pointer}
+.log p.theirs:hover{background:rgba(255,255,255,.04)}
+.acct .danger{color:#ff8f86}
+
 /* HUD */
 .hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;gap:8px;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 12px) calc(env(safe-area-inset-bottom,0px) + 14px);box-sizing:border-box}
 .bug{align-self:center;display:grid;grid-template-columns:auto auto auto;align-items:stretch;background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:4px;overflow:hidden;max-width:100%}
@@ -169,6 +176,14 @@ input::placeholder{color:#7d8280}
 <canvas id="gl"></canvas>
 <canvas id="ov"></canvas>
 <div class="shade" id="shade" hidden></div>
+<div class="modal" id="confirmBox" hidden>
+  <div class="modal-card" role="dialog" aria-labelledby="confirmTitle">
+    <p class="lbl" id="confirmLbl"></p>
+    <h3 id="confirmTitle"></h3>
+    <p id="confirmText"></p>
+    <div class="row" id="confirmBtns"></div>
+  </div>
+</div>
 <div class="modal" id="chal" hidden>
   <div class="modal-card" role="dialog" aria-labelledby="chalText">
     <p class="lbl">Challenge</p>
@@ -185,7 +200,7 @@ input::placeholder{color:#7d8280}
       <h1 class="brand">Beer <span>Die</span></h1>
       <div class="me"><label class="lbl" for="nameIn">Your name</label><input id="nameIn" maxlength="16" placeholder="e.g. King" autocomplete="off">
         <div class="lvlrow"><b id="lvl">Lv 1</b><div class="xpbar"><i id="xpfill"></i></div><span id="xptext">0 / 150 XP</span></div>
-        <div class="acct" id="acct" hidden><span id="acctText"></span><button class="linkbtn" id="acctBtn" type="button"></button></div></div>
+        <div class="acct" id="acct" hidden><span id="acctText"></span><button class="linkbtn" id="acctBtn" type="button"></button><button class="linkbtn danger" id="acctDel" type="button" hidden>Delete account</button></div></div>
     </header>
     <div class="hero" aria-hidden="true"></div>
 
@@ -252,7 +267,9 @@ input::placeholder{color:#7d8280}
         <dt>Plop</dt><dd>In the cup: +3. First to 7 or 11 wins, you pick.</dd>
         <dt>Modes</dt><dd>Host a 1v1 or 2v2 game, public (listed under Open games) or private (code only). In 2v2 teammates take turns throwing and either one can catch.</dd>
         <dt>Redemption</dt><dd>When someone hits the winning score, the other side gets one last shot. Plop it and the score goes back to what it was before the winning throw.</dd>
-        <dt>Levels</dt><dd>Every finished game earns XP (more for a win). Every 5 levels unlocks a new arena, each bigger and louder than the last. Your level is saved on this phone.</dd>
+        <dt>Contact</dt><dd>Questions, bugs or someone being abusive? Email <span class="sel" id="supportMail">matthiasgomez26@gmail.com</span>. <a href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></dd>
+        <dt>Levels</dt><dd>Every finished game earns XP (more for a win). Every 5 levels unlocks a new arena, each bigger and louder than the last. Sign in to keep your level on every device.</dd>
+        <dt>Chat</dt><dd>Tap any message to report it or block that player. Blocked players’ messages, games and challenges are hidden.</dd>
         <dt>Power-ups</dt><dd>Earn one for every Plop (hold up to 2). Aim Guide and Double Down are used on your throw. Sticky Hands and Shaky Hands can be used any time and hit their next throw.</dd>
       </dl>
       </div>
@@ -279,9 +296,10 @@ input::placeholder{color:#7d8280}
       <button class="btn-main" id="authGo" type="submit">Sign in</button>
       <button class="linkbtn" id="authForgot" type="button">Forgot password?</button>
     </form>
-    <div class="or"><span>or</span></div>
+    <div class="or" id="authOr"><span>or</span></div>
     <button class="btn-sec" id="authGoogle" type="button">Continue with Google</button>
     <button class="linkbtn" id="authGuest" type="button">Play as guest (progress stays on this phone)</button>
+    <p class="hint auth-foot">By signing in you agree to play nice in chat. <a href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
   </div>
 </section>
 
@@ -311,6 +329,7 @@ input::placeholder{color:#7d8280}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="firebase-config.js"></script>
+<script src="app-config.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -318,6 +337,10 @@ input::placeholder{color:#7d8280}
 <script>
 (() => {
 const $ = s => document.getElementById(s);
+// running inside the iOS app (Capacitor) rather than a browser
+const IS_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const APPCFG = window.BEERDIE_APP || {};
+const SUPPORT_EMAIL = APPCFG.supportEmail || 'matthiasgomez26@gmail.com';
 const FLIGHT = 1100, BOUNCE = 480, CATCH_MS = 1250, FALL_MS = 520, KICK_MS = 900, RESULT_MS = 2400, TARGET = 7;
 const KICKZ = -0.45, FLOOR = -0.625;         // game z: 1 unit = 4 ft; floor is 2.5 ft below the tabletop
 const CUPS = [[-0.8,0.08],[0.8,0.08],[-0.8,0.92],[0.8,0.92]];
@@ -751,7 +774,7 @@ let kickFx = 0;
 
 let flashTimer = null;
 function flashStatus(t){ $('status').textContent = t; clearTimeout(flashTimer); flashTimer = setTimeout(render, 1600); }
-$('actBtn').addEventListener('click', () => { if (G && !spectator && G.phase === 'over') act('rematch', {}); });
+$('actBtn').addEventListener('click', () => { if (G && !spectator && G.phase === 'over') betweenGames(() => act('rematch', {})); });
 document.addEventListener('keydown', e => {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   if ($('hud').hidden || !G || G.phase !== 'over') return;
@@ -1206,7 +1229,7 @@ const TABLES = [
   {key:'arena',   name:'Arena pick',  desc:'Whatever the arena uses'},
   {key:'plywood', name:'Plywood',     desc:'Classic basement top'},
   {key:'kegs',    name:'Keg Stand',   desc:'Painted kegs on dark wood'},
-  {key:'ud',      name:'U of Dallas', desc:'Navy and white, UD pride'},
+  {key:'ud',      name: IS_APP ? 'College' : 'U of Dallas', desc: IS_APP ? 'Navy and white campus colors' : 'Navy and white, UD pride'},
   {key:'frat',    name:'Frat Row',    desc:'The boys, painted on'},
 ];
 const tableMats = {};
@@ -1262,10 +1285,10 @@ function tableMat(key){
     halves(g, w, h, (g, w, hh) => {
       g.fillStyle = '#fff'; g.textAlign = 'center';
       g.beginPath(); g.arc(w/2, hh*0.34, 78, 0, 7); g.lineWidth = 6; g.strokeStyle = '#fff'; g.stroke();
-      g.font = '900 88px "Big Shoulders Display", sans-serif'; g.fillText('UD', w/2, hh*0.34 + 30);
-      g.font = '800 58px "Big Shoulders Display", sans-serif'; g.fillText('UNIVERSITY', w/2, hh*0.66);
-      g.fillText('OF DALLAS', w/2, hh*0.66 + 54);
-      g.font = '600 22px "IBM Plex Sans Condensed", sans-serif'; g.fillText('C R U S A D E R S', w/2, hh*0.66 + 92);
+      g.font = '900 88px "Big Shoulders Display", sans-serif'; g.fillText(IS_APP ? 'BD' : 'UD', w/2, hh*0.34 + 30);
+      g.font = '800 58px "Big Shoulders Display", sans-serif'; g.fillText(IS_APP ? 'BEER DIE' : 'UNIVERSITY', w/2, hh*0.66);
+      g.fillText(IS_APP ? 'UNIVERSITY' : 'OF DALLAS', w/2, hh*0.66 + 54);
+      g.font = '600 22px "IBM Plex Sans Condensed", sans-serif'; g.fillText(IS_APP ? 'E S T .   2 0 2 6' : 'C R U S A D E R S', w/2, hh*0.66 + 92);
     });
   });
   if (key === 'frat') map = canvasTex(512, 1024, (g, w, h) => {
@@ -1522,13 +1545,14 @@ let gameFmt = '1v1', gameVis = 'public';
 try { if (localStorage.getItem('bd-fmt') === '2v2') gameFmt = '2v2'; if (localStorage.getItem('bd-vis') === 'private') gameVis = 'private'; } catch(e){}
 setupSeg('fmtSeg', () => gameFmt, v => { gameFmt = v === '2v2' ? '2v2' : '1v1'; try { localStorage.setItem('bd-fmt', gameFmt); } catch(e){} });
 setupSeg('visSeg', () => gameVis, v => { gameVis = v === 'private' ? 'private' : 'public'; try { localStorage.setItem('bd-vis', gameVis); } catch(e){} });
-$('leaveBtn').addEventListener('click', () => {
+$('leaveBtn').addEventListener('click', () => { if (G && G.phase === 'over') betweenGames(leaveGame); else leaveGame(); });
+function leaveGame(){
   const gr = gameRoom; gameRoom = null; guestPeer = null;
   if (gr) gr.leave().catch(()=>{});
   if (lobbyRoom) lobbyRoom.presence({hosting:null, open:null, fmt:null, filled:null, need:null, players:null, target:null, challenge:null}).catch(()=>{});
   pendingChallenge = null; $('chatPanel').hidden = true;
   hostCode = null; showLobby();
-});
+}
 
 // ---------- online ----------
 function code4(){ const a='ABCDEFGHJKMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<4;i++) s+=a[Math.floor(Math.random()*a.length)]; return s; }
@@ -1640,7 +1664,7 @@ $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') joinGame($
 
 function renderGames(peers){
   const boxEl = $('games'); boxEl.innerHTML = '';
-  const list = peers.filter(p => !p.sameTab && p.presence && p.presence.hosting && p.presence.open);
+  const list = peers.filter(p => !p.sameTab && p.presence && p.presence.hosting && p.presence.open && !isBlocked(p.presence.name));
   $('gamesHint').textContent = list.length ? list.length + ' open' : '';
   if (!list.length) { const e = document.createElement('p'); e.className='empty'; e.textContent='No open games right now. Host one and it shows up here.'; boxEl.appendChild(e); return; }
   list.forEach(p => {
@@ -1680,7 +1704,11 @@ function renderOnline(peers){
     const lv = p.sameTab ? myLevel() : (+p.presence.lvl || 1);
     const n2 = document.createElement('small'); n2.textContent = 'Lv ' + lv + ' · ' + (STATUS_TEXT[st] || 'Online');
     nm.append(n1, n2); r.append(d, nm);
-    if (!p.sameTab && st === 'menu') {
+    if (!p.sameTab && isBlocked(p.presence.name)) {
+      const b = document.createElement('button'); b.textContent = 'Unblock'; b.className = 'btn-sec';
+      b.addEventListener('click', () => { blocked.delete(blockKey(p.presence.name)); saveBlocked(); renderOnline(peers); });
+      r.appendChild(b);
+    } else if (!p.sameTab && st === 'menu') {
       const b = document.createElement('button'); b.textContent = 'Challenge';
       b.addEventListener('click', () => challenge(p.peer, clean(p.presence.name || 'them').slice(0,16)));
       r.appendChild(b);
@@ -1711,14 +1739,15 @@ function ingestChat(where, peers){
   });
 }
 function addChat(where, name, text, mine){
-  const arr = chats[where]; arr.push({name, text, mine}); if (arr.length > 40) arr.shift();
+  if (!mine && isBlocked(name)) return;
+  const arr = chats[where]; arr.push({name, text, mine, where}); if (arr.length > 40) arr.shift();
   renderChat(where);
   if (where === 'game' && !mine && !$('hud').hidden && $('chatPanel').hidden) showToast(name + ': ' + text);
 }
 function renderChat(where){
   const box = $(where === 'lobby' ? 'lobbyLog' : 'gameLog'); box.innerHTML = '';
   if (!chats[where].length) { const e = document.createElement('p'); e.className = 'empty'; e.textContent = where === 'lobby' ? 'No messages yet. Say hi.' : 'Say something to the table.'; box.appendChild(e); return; }
-  chats[where].forEach(c => { const p = document.createElement('p'); if (c.mine) p.className = 'mine'; const b = document.createElement('b'); b.textContent = c.name; p.append(b, document.createTextNode(c.text)); box.appendChild(p); });
+  chats[where].filter(c => c.mine || !isBlocked(c.name)).forEach(c => { const p = document.createElement('p'); p.className = c.mine ? 'mine' : 'theirs'; if (!c.mine) { p.title = 'Tap to report or block'; p.addEventListener('click', () => chatActions(c)); } const b = document.createElement('b'); b.textContent = c.name; p.append(b, document.createTextNode(c.text)); box.appendChild(p); });
   box.scrollTop = box.scrollHeight;
 }
 $('lobbySay').addEventListener('submit', e => { e.preventDefault(); sendChat('lobby', $('lobbyMsg').value); $('lobbyMsg').value = ''; });
@@ -1743,6 +1772,7 @@ function checkChallenges(peers){
   peers.forEach(p => {
     const c = p.presence && p.presence.challenge;
     if (!c || c.to !== lobbyMe || typeof c.n !== 'number' || !/^[A-Z]{4}$/.test(String(c.code))) return;
+    if (isBlocked(p.presence.name)) { const k0 = p.peer + ':' + c.n; if (!seenChal[k0]) { seenChal[k0] = 1; room.presence({decline: {to: p.peer, n: c.n}}).catch(()=>{}); } return; }
     const k = p.peer + ':' + c.n; if (seenChal[k]) return; seenChal[k] = 1;
     if (mode) { room.presence({decline: {to: p.peer, n: c.n}}).catch(()=>{}); return; }   // busy in a game
     openChal = {from: p.peer, n: c.n, code: String(c.code)};
@@ -1766,6 +1796,92 @@ function onLobbyPeers(peers){
   const me = peers.find(p => p.sameTab); if (me) lobbyMe = me.peer;
   renderGames(peers); renderOnline(peers); ingestChat('lobby', peers); checkChallenges(peers);
 }
+
+
+// ---------- in-page confirm box (the viewer never shows browser dialogs) ----------
+function askBox(label, title, text, buttons){
+  $('confirmLbl').textContent = label; $('confirmTitle').textContent = title; $('confirmText').textContent = text;
+  const row = $('confirmBtns'); row.innerHTML = '';
+  buttons.forEach(([txt, cls, fn]) => { const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.textContent = txt; b.addEventListener('click', () => { $('confirmBox').hidden = true; if (fn) fn(); }); row.appendChild(b); });
+  $('confirmBox').hidden = false;
+}
+$('supportMail').textContent = SUPPORT_EMAIL;
+
+// ---------- delete account (required by the App Store) ----------
+$('acctDel').addEventListener('click', () => {
+  if (!fbUser) return;
+  askBox('Delete account', 'Delete your account?', 'This permanently removes your account, level, XP and saved settings. You can’t undo it.', [
+    ['Delete', 'btn-main', async () => {
+      const u = fbUser;
+      try {
+        await fbDb.collection('users').doc(u.uid).delete().catch(()=>{});
+        await u.delete();
+        prog = {xp: 0}; try { localStorage.setItem('bd-prog', JSON.stringify(prog)); localStorage.removeItem('bd-guest'); } catch(e){}
+        renderLevel(); showToast('Your account was deleted');
+      } catch(err) {
+        if (err && err.code === 'auth/requires-recent-login') {
+          askBox('Delete account', 'Sign in again first', 'For security, sign in one more time, then tap Delete account again.', [['OK', 'btn-main', () => { fbAuth.signOut(); }]]);
+        } else showToast('Couldn’t delete the account. Try again.');
+      }
+    }],
+    ['Cancel', 'btn-sec', null]
+  ]);
+});
+
+// ---------- block and report in chat (required for apps with user chat) ----------
+let blocked = new Set();
+try { blocked = new Set(JSON.parse(localStorage.getItem('bd-blocked') || '[]')); } catch(e){}
+const blockKey = name => String(name || '').trim().toLowerCase();
+const isBlocked = name => blocked.has(blockKey(name));
+function saveBlocked(){ try { localStorage.setItem('bd-blocked', JSON.stringify([...blocked])); } catch(e){} }
+function chatActions(c){
+  askBox('Chat', c.name, '“' + c.text + '”', [
+    ['Report', 'btn-main', () => reportMsg(c)],
+    [isBlocked(c.name) ? 'Unblock' : 'Block', 'btn-sec', () => {
+      if (isBlocked(c.name)) blocked.delete(blockKey(c.name)); else blocked.add(blockKey(c.name));
+      saveBlocked(); renderChat('lobby'); renderChat('game');
+      showToast(isBlocked(c.name) ? c.name + ' is blocked. You won’t see their messages or challenges.' : c.name + ' is unblocked');
+    }],
+    ['Cancel', 'btn-sec', null]
+  ]);
+}
+async function reportMsg(c){
+  const rec = {name: c.name, text: c.text, where: c.where || 'chat', at: Date.now(), reporter: fbUser ? fbUser.uid : null};
+  if (fbDb && fbUser) {
+    try { await fbDb.collection('reports').add(rec); showToast('Reported. Thanks, we’ll review it.'); return; } catch(e){}
+  }
+  askBox('Report', 'Report this message', 'Email ' + SUPPORT_EMAIL + ' with the player name “' + c.name + '” and what they said. You can also block them so you don’t see them again.', [['OK', 'btn-main', null]]);
+}
+
+// ---------- ads between games (iOS app only, Google AdMob) ----------
+const ADS = Object.assign({iosInterstitial: '', testing: true, everyGames: 2}, APPCFG.ads || {});
+let adMob = null, adReady = false, gamesSinceAd = 0, adCountedFor = null;
+async function prepAd(){
+  if (!adMob || !ADS.iosInterstitial) return;
+  try { await adMob.prepareInterstitial({adId: ADS.iosInterstitial, isTesting: !!ADS.testing}); adReady = true; }
+  catch(e) { adReady = false; setTimeout(prepAd, 60000); }
+}
+async function initAds(){
+  if (!IS_APP) return;
+  const C = window.Capacitor; const P = C && ((C.Plugins && C.Plugins.AdMob) || (C.registerPlugin && C.registerPlugin('AdMob'))); if (!P) return;
+  try {
+    await P.initialize({initializeForTesting: !!ADS.testing});
+    try { const st = await P.trackingAuthorizationStatus(); if (st && st.status === 'notDetermined') await P.requestTrackingAuthorization(); } catch(e){}
+    adMob = P; prepAd();
+  } catch(e) { adMob = null; }
+}
+// called when a finished game moves on (rematch or leave); plays an ad every few games, never mid-game
+async function betweenGames(next){
+  if (G && G.phase === 'over' && adCountedFor !== G.id) { adCountedFor = G.id; gamesSinceAd++; }
+  if (adMob && adReady && gamesSinceAd >= Math.max(1, ADS.everyGames | 0)) {
+    gamesSinceAd = 0; adReady = false;
+    try { await adMob.showInterstitial(); } catch(e){}
+    prepAd();
+  }
+  next();
+}
+if (IS_APP) { const g = $('authGoogle'); if (g) g.hidden = true; const o = $('authOr'); if (o) o.hidden = true; }   // Google pop-ups don't work inside the app
+initAds();
 
 // ---------- accounts: Firebase sign-in keeps level, arena, table and name in the cloud ----------
 let fbAuth = null, fbDb = null, fbUser = null, cloudReady = false, saveT = null;
@@ -1797,6 +1913,7 @@ function renderAcct(){
   el.hidden = false;
   $('acctText').textContent = fbUser ? 'Signed in' + (fbUser.email ? ' as ' + fbUser.email : '') + ' · progress saved' : 'Guest · progress only on this phone';
   $('acctBtn').textContent = fbUser ? 'Sign out' : 'Sign in';
+  $('acctDel').hidden = !fbUser;
 }
 function showAuth(on){ $('auth').hidden = !on; if (!mode) $('lobby').hidden = !!on; if (on) { $('authErr').textContent = ''; } }
 let authMode = 'in';
