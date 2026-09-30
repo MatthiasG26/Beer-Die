@@ -72,6 +72,16 @@ input::placeholder{color:#7d8280}
 .controls{display:flex;gap:8px;pointer-events:auto}
 .leave{background:var(--glass);border:1px solid var(--line);color:var(--muted);padding:10px 14px;font-size:12px}
 .act{background:var(--text);color:var(--ink);font-size:15px;padding:11px 26px}
+.tray{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;pointer-events:auto;max-width:100%}
+.pu{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:var(--glass-2);border:1px solid rgba(232,176,74,.55);color:var(--text);padding:7px 11px;border-radius:4px;text-transform:none;letter-spacing:0;text-align:left;font-weight:500}
+.pu b{font:800 15px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+.pu span{font-size:11px;color:var(--muted)}
+.pu:disabled{opacity:.45;cursor:default;border-color:var(--line)}
+.pu.armed{border-color:var(--good);opacity:1}
+.pu.armed b{color:var(--good)}
+.tray-note{font:500 12px var(--ui);color:var(--muted);align-self:center}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);transform:translateX(-50%);background:var(--glass-2);border:1px solid rgba(232,176,74,.6);color:var(--text);font:500 14px var(--ui);padding:8px 14px;border-radius:4px;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+.toast b{color:var(--gold);font-weight:600}
 .loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--muted);font:500 14px var(--ui);letter-spacing:.1em;text-transform:uppercase;pointer-events:none}
 </style>
 </head>
@@ -122,6 +132,7 @@ input::placeholder{color:#7d8280}
         <dt>FIFA</dt><dd>Only when the die goes off the table untouched, including a throw that goes long: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
         <dt>Plink</dt><dd>Off the side of a cup: +2 if they drop it, nothing if they catch it. It comes off fast, so it’s much harder to catch.</dd>
         <dt>Plop</dt><dd>In the cup: +3. First to 7 wins.</dd>
+        <dt>Power-ups</dt><dd>Earn one for every catch, FIFA or Plop (hold up to 2). Aim Guide and Double Down are used on your throw; Sticky Hands and Shaky Hands while they line up theirs.</dd>
       </dl>
     </div>
   </div>
@@ -134,7 +145,9 @@ input::placeholder{color:#7d8280}
     <div class="team" id="sideOpp"><span class="sc" id="scOpp">0</span><span class="nm" id="nmOpp">Opponent</span></div>
   </div>
   <div class="banner" id="banner"></div>
+  <div class="toast" id="toast" hidden></div>
   <div class="foot">
+    <div class="tray" id="tray"></div>
     <p class="status" id="status"></p>
     <div class="controls">
       <button class="leave" id="leaveBtn">Leave</button>
@@ -177,9 +190,35 @@ const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
 const later = (fn, ms) => timers.push(setTimeout(fn, ms));
 
 // ---------- engine (host or CPU mode) ----------
+// power-ups: earned by good plays, spent at the right moment of a turn
+const PU = {
+  guide:  {name:'Aim Guide',    when:'throw',  desc:'See where it lands'},
+  double: {name:'Double Down',  when:'throw',  desc:'This throw scores x2'},
+  sticky: {name:'Sticky Hands', when:'defend', desc:'2x time to catch'},
+  shaky:  {name:'Shaky Hands',  when:'defend', desc:'Their throw wobbles'},
+};
+const PU_KEYS = Object.keys(PU);
 function newGame(names, bPeer){
   return {id:0, phase:'aim', thrower: Math.random()<.5?'A':'B', score:{A:0,B:0},
-          target:TARGET, shot:null, msg:'', sub:'', tone:'', names, bPeer: bPeer||null, winner:null};
+          target:TARGET, shot:null, msg:'', sub:'', tone:'', names, bPeer: bPeer||null, winner:null,
+          pu:{A:[], B:[]}, armed:{A:{}, B:{}}, feed:null};
+}
+function feed(side, text){ G.feed = {n: (G.feed ? G.feed.n : 0) + 1, side, text}; }
+function award(side){
+  if (G.pu[side].length >= 2) return;
+  const k = PU_KEYS[Math.floor(Math.random()*PU_KEYS.length)];
+  G.pu[side].push(k); feed(side, (G.names[side]||'Player') + ' earned ' + PU[k].name);
+}
+function canUse(side, kind){
+  if (!G || G.phase !== 'aim' || !PU[kind] || !G.pu[side].includes(kind) || G.armed[side][kind]) return false;
+  return PU[kind].when === 'throw' ? G.thrower === side : G.thrower !== side;
+}
+function usePU(side, kind){
+  if (!canUse(side, kind)) return;
+  G.pu[side].splice(G.pu[side].indexOf(kind), 1);
+  G.armed[side][kind] = true;
+  feed(side, (G.names[side]||'Player') + ' used ' + PU[kind].name);
+  commit();
 }
 function isAuthority(){ return mode === 'cpu' || mode === 'host' || mode === 'local'; }
 function commit(){
@@ -189,7 +228,12 @@ function commit(){
 
 function doThrow(side, aim, power){
   if (!G || G.phase !== 'aim' || G.thrower !== side) return;
-  aim = Math.max(-1, Math.min(1, +aim||0)); power = Math.max(0, Math.min(1, +power||0));
+  aim = +aim||0; power = +power||0;
+  const mine = G.armed[side], theirs = G.armed[other(side)];
+  const shaken = !!theirs.shaky, sticky = !!theirs.sticky, mult = mine.double ? 2 : 1;
+  if (shaken) { aim += (Math.random()-0.5)*0.5; power += (Math.random()-0.5)*0.24; }
+  G.armed = {A:{}, B:{}};                       // everything armed for this throw is spent
+  aim = Math.max(-1, Math.min(1, aim)); power = Math.max(0, Math.min(1, power));
   const lx = aim * 1.18, ly = 0.3 + power * 0.85;
   let out = 'table', cup = null;
   if (Math.abs(lx) > 1.0) out = 'wide';
@@ -205,11 +249,12 @@ function doThrow(side, aim, power){
   // deeper landings give a shorter catch window
   const depth = Math.max(0, Math.min(1, (ly - 0.55) / 0.45));
   const plink = out === 'plink';
-  const zone = plink ? 0.1 : 0.36 - depth * 0.14;               // a plink comes off the cup fast and wild
-  const zpos = plink ? 0.3 + Math.random() * 0.4 : 0.25 + Math.random() * (0.9 - 0.25 - zone);
+  const zone = (plink ? 0.1 : 0.36 - depth * 0.14) * (sticky ? 2 : 1);   // a plink comes off the cup fast and wild
+  const zpos = plink ? 0.3 + Math.random() * 0.4 : 0.2 + Math.random() * Math.max(0, 0.92 - 0.2 - zone);
   G.id++;
   G.shot = {id:G.id, by:side, aim, power, lx: plink ? cup[0] : lx, ly: plink ? cup[1] : ly, out, cup, zone, zpos, res:null,
-            spin: Math.random()*6, drift: plink ? (cup[0] > 0 ? -1 : 1) * (0.6 + Math.random()*0.8) : (Math.random()-0.5)*0.8};
+            spin: Math.random()*6, drift: plink ? (cup[0] > 0 ? -1 : 1) * (0.6 + Math.random()*0.8) : (Math.random()-0.5)*0.8,
+            mult, sticky, shaken};
   G.phase = 'flight'; G.msg = ''; G.sub = '';
   commit();
   const id = G.id;
@@ -230,8 +275,10 @@ function resolveFlight(id){
     wide:['Wide','Missed the table · no point','bad',0],
     sink:['Plop','Straight in the cup · +3','great',3]
   }[s.out];
-  G.score[t] += M[3];
-  finish(M[0], M[1], M[2], id);
+  const mult = s.mult || 1;
+  G.score[t] += M[3] * mult;
+  if (s.out === 'sink') award(t);
+  finish(M[0], M[1].replace(/\+(\d)/, (m, d) => '+' + d*mult + (mult > 1 ? ' (Double Down)' : '')), M[2], id);
 }
 
 function doCatch(side, res, id){
@@ -240,13 +287,14 @@ function doCatch(side, res, id){
   G.shot.res = res;
   const pl = G.shot.out === 'plink';
   if (G.shot.out === 'long') {
-    if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked the long one up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
+    if (res === 'fifa') { G.score[side] += 1; award(side); finish('FIFA', 'Kicked the long one up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
     else finish('Long', 'Sailed off the end · no point', 'bad', id);
     return;
   }
-  if (res === 'caught') finish('Caught', pl ? 'Saved a plink · no point' : 'One hand, clean · no point', 'bad', id);
-  else if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked it up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
-  else { G.score[G.thrower] += pl ? 2 : 1; finish(pl ? 'Plink' : 'Dropped', pl ? 'Off the cup and dropped · +2' : 'Hit the table, not caught · +1', 'good', id); }
+  const mult = G.shot.mult || 1, dd = mult > 1 ? ' (Double Down)' : '';
+  if (res === 'caught') { award(side); finish('Caught', pl ? 'Saved a plink · no point' : 'One hand, clean · no point', 'bad', id); }
+  else if (res === 'fifa') { G.score[side] += 1; award(side); finish('FIFA', 'Kicked it up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
+  else { const pts = (pl ? 2 : 1) * mult; G.score[G.thrower] += pts; finish(pl ? 'Plink' : 'Dropped', (pl ? 'Off the cup and dropped · +' : 'Hit the table, not caught · +') + pts + dd, 'good', id); }
 }
 
 function finish(msg, sub, tone, id){
@@ -266,6 +314,10 @@ function rematch(){ if (!G) return; clearTimers(); G = newGame(G.names, G.bPeer)
 // ---------- CPU ----------
 function cpuTick(){
   if (mode !== 'cpu' || !G) return;
+  if (G.phase === 'aim') {
+    const k = G.pu.B.find(k => canUse('B', k));
+    if (k && Math.random() < 0.6) { const key = G.id; later(() => { if (G && G.phase === 'aim' && G.id === key) usePU('B', k); }, 500 + Math.random()*500); }
+  }
   if (G.phase === 'aim' && G.thrower === 'B') {
     const key = G.id;
     later(() => {
@@ -295,6 +347,7 @@ function act(type, data){
     if (type === 'throw') doThrow(mySide, data.aim, data.power);
     else if (type === 'catch') doCatch(mySide, data.res, data.id);
     else if (type === 'rematch') rematch();
+    else if (type === 'use') usePU(mySide, data.kind);
   } else sendIntent(type, data);
 }
 function handleIntent(it){
@@ -303,6 +356,7 @@ function handleIntent(it){
   if (it.type === 'throw') doThrow('B', it.aim, it.power);
   else if (it.type === 'catch') doCatch('B', it.res, it.id);
   else if (it.type === 'rematch' && G && G.phase === 'over') rematch();
+  else if (it.type === 'use') usePU('B', String(it.kind));
 }
 
 // ---------- local play state ----------
@@ -513,7 +567,41 @@ function render(){
     else if (D && D.stage === 'fall') status = 'It’s going off the table. FIFA: tap it right before it hits the floor.';
     else if (D && D.stage === 'kick') status = 'It’s up. Tap it again to catch it.';
   }
+  if (G.phase === 'aim' && !spectator && G.thrower === mySide && G.armed && G.armed[other(mySide)] && G.armed[other(mySide)].shaky)
+    status = 'You’ve been hit with Shaky Hands. This throw will wobble.';
   $('status').textContent = status;
+  renderTray();
+  if (G.feed && G.feed.n !== lastFeed) {
+    lastFeed = G.feed.n;
+    const t = $('toast'); t.textContent = G.feed.text; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+}
+let lastFeed = 0, toastTimer = null;
+let traySig = '';
+function renderTray(){
+  const tray = $('tray');
+  const inv = (G && G.pu && G.pu[mySide]) || [], armed = (G && G.armed && G.armed[mySide]) || {};
+  // only rebuild when something changed, so a tap in progress is never lost
+  const sig = (!G || spectator || !G.pu) ? '' : JSON.stringify([mySide, inv, armed, inv.map(k => canUse(mySide, k)), (G.pu[other(mySide)]||[]).length, G.names[other(mySide)]]);
+  if (sig === traySig) return;
+  traySig = sig; tray.innerHTML = '';
+  if (!sig) return;
+  Object.keys(armed).filter(k => armed[k] && PU[k]).forEach(k => {
+    const b = document.createElement('button'); b.className = 'pu armed'; b.disabled = true;
+    const n = document.createElement('b'); n.textContent = PU[k].name; const d = document.createElement('span'); d.textContent = 'Ready';
+    b.append(n, d); tray.appendChild(b);
+  });
+  inv.forEach(k => {
+    if (!PU[k]) return;
+    const b = document.createElement('button'); b.className = 'pu'; b.disabled = !canUse(mySide, k);
+    const n = document.createElement('b'); n.textContent = PU[k].name;
+    const d = document.createElement('span'); d.textContent = PU[k].desc + (b.disabled ? (PU[k].when === 'throw' ? ' · on your throw' : ' · on their throw') : '');
+    b.append(n, d); b.addEventListener('click', () => act('use', {kind: k}));
+    tray.appendChild(b);
+  });
+  const oc = ((G.pu[other(mySide)]) || []).length;
+  if (oc) { const s = document.createElement('span'); s.className = 'tray-note'; s.textContent = (G.names[other(mySide)] || 'Opponent') + ' holds ' + oc + ' power-up' + (oc > 1 ? 's' : ''); tray.appendChild(s); }
 }
 
 // ---------- 3D scene ----------
@@ -726,6 +814,9 @@ function frame(now){
   const lobbyLook = new THREE.Vector3(0, TH, 0);
   camera.position.copy(lobbyPos).lerp(GAME_CAM.pos, camBlend);
   camera.lookAt(lobbyLook.clone().lerp(GAME_CAM.look, camBlend));
+  if (inGame && G && G.phase === 'aim' && !spectator && G.thrower === mySide && G.armed && G.armed[other(mySide)] && G.armed[other(mySide)].shaky) {
+    camera.position.x += Math.sin(now*0.047)*0.05; camera.position.y += Math.sin(now*0.061)*0.035; camera.lookAt(GAME_CAM.look);
+  }
 
   if (inGame && G) defTick(now);
   const d = inGame && G ? diePos(now) : null;
@@ -748,6 +839,8 @@ function frame(now){
   }
   for (let i=drops.length-1;i>=0;i--){ const m = drops[i]; m.userData.t += dt; m.userData.v.y -= 9*dt; m.position.addScaledVector(m.userData.v, dt);
     if (m.userData.t > 0.9 || m.position.y < TH) { scene.remove(m); drops.splice(i,1); } }
+  const gold = !!(d && G && G.shot && G.shot.mult > 1);
+  if (die.userData.gold !== gold) { die.userData.gold = gold; die.material.forEach(m => { m.emissive.setHex(gold ? 0x6a4300 : 0x000000); }); }
   bulbs.forEach((b, i) => { b.scale.setScalar(0.92 + 0.08*Math.sin(now*0.002 + i*1.7)); });
 
   renderer.render(scene, camera);
@@ -765,6 +858,17 @@ function drawOverlay(now, d){
     octx.beginPath(); octx.moveTo(x0, y0 - len*k*0.35); octx.lineTo(x0, ty); octx.stroke();
     octx.beginPath(); octx.moveTo(x0-8, ty+9); octx.lineTo(x0, ty); octx.lineTo(x0+8, ty+9); octx.stroke();
     octx.globalAlpha = 1;
+  }
+  if (swipe && swipe.pts.length > 1 && G.armed && G.armed[mySide] && G.armed[mySide].guide) {
+    const a0 = swipe.pts[0], b0 = swipe.pts[swipe.pts.length-1], up = a0.y - b0.y;
+    if (up > 10) {
+      const aim = Math.max(-1, Math.min(1, ((b0.x - a0.x) / up) * 1.35)), power = Math.max(0, Math.min(1, up / (H * 0.5)));
+      const lx = aim * 1.18, ly = 0.3 + power * 0.85, onTable = Math.abs(lx) <= 1 && ly >= 0.55 && ly <= 1;
+      const q = proj(lx, Math.min(ly, 1.15), 0), r = Math.max(10, 0.3*q.k);
+      octx.strokeStyle = onTable ? 'rgba(127,210,155,.95)' : 'rgba(217,54,44,.95)'; octx.lineWidth = 2.5;
+      octx.beginPath(); octx.ellipse(q.x, q.y + DIE*q.k/2, r, r*0.4, 0, 0, 7); octx.stroke();
+      octx.beginPath(); octx.arc(q.x, q.y + DIE*q.k/2, 2.5, 0, 7); octx.fillStyle = octx.strokeStyle; octx.fill();
+    }
   }
   const t = swipe ? {pts: swipe.pts, a: 1} : (trail && now - trail.t < 450 ? {pts: trail.pts, a: 1 - (now - trail.t)/450} : null);
   if (t && t.pts.length > 1) {
