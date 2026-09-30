@@ -32,20 +32,28 @@ input{font:500 17px var(--ui);background:rgba(255,255,255,.06);color:var(--text)
 input::placeholder{color:#7d8280}
 
 /* lobby */
-.lobby{position:fixed;inset:0;overflow:auto;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 18px) 28px;box-sizing:border-box;background:linear-gradient(90deg, rgba(8,9,10,.94) 0%, rgba(8,9,10,.82) 45%, rgba(8,9,10,.25) 80%, rgba(8,9,10,.1))}
+.lobby{position:fixed;inset:0;overflow:auto;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 18px) 28px;box-sizing:border-box;background:linear-gradient(180deg, rgba(10,11,12,.55) 0%, rgba(10,11,12,.12) 34%, rgba(10,11,12,.18) 70%, rgba(10,11,12,.5) 100%)}
+@media (min-width:900px){.lobby{background:linear-gradient(90deg, rgba(10,11,12,.72) 0%, rgba(10,11,12,.45) 36%, rgba(10,11,12,0) 62%)}}
 .lobby-in{max-width:440px;display:flex;flex-direction:column;gap:14px}
 @media (min-width:900px){.lobby{padding-inline:56px;padding-block:48px}}
+.hero{height:min(34vh,300px);flex:none}
+@media (min-width:900px){.hero{display:none}}
 .top{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.brand{font:900 clamp(46px,13vw,72px)/.85 var(--display);text-transform:uppercase;margin:0;letter-spacing:-.005em;white-space:nowrap}
+.brand{font:900 clamp(52px,15vw,84px)/.85 var(--display);text-transform:uppercase;margin:0;letter-spacing:-.005em;white-space:nowrap;text-shadow:0 4px 28px rgba(0,0,0,.55)}
+.brand span{text-shadow:0 0 26px rgba(232,176,74,.55), 0 4px 28px rgba(0,0,0,.55)}
 .brand span{color:var(--gold)}
 .me{flex:1 1 150px;min-width:0;display:flex;flex-direction:column;gap:6px}
 .me input{padding:9px 11px;font-size:16px}
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line)}
 .tab{background:none;color:var(--muted);padding:10px 12px 9px;font-size:13px;border-radius:0;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px}
 .tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--gold)}
+.tabs{background:rgba(20,22,25,.5);border-radius:6px 6px 0 0;padding:0 4px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.btn-main{box-shadow:0 6px 20px rgba(232,176,74,.25)}
+#hostBtn{background:var(--gold);color:#1a1206}
+#hostBtn:hover{background:#f3c265}
 .badge{min-width:18px;padding:1px 6px;border-radius:9px;background:var(--good);color:#0b1a10;font:700 11px var(--ui);letter-spacing:0;text-align:center}
 .pane{display:flex;flex-direction:column;gap:12px}
-.card{background:rgba(18,21,23,.78);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:12px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.card{background:rgba(20,22,25,.58);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 30px rgba(0,0,0,.25);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:12px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .card-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .card h2{font:800 20px var(--display);letter-spacing:.05em;text-transform:uppercase;margin:0}
 .hint{font-size:12px;color:var(--muted);margin:0}
@@ -145,7 +153,7 @@ input::placeholder{color:#7d8280}
 
 <canvas id="gl"></canvas>
 <canvas id="ov"></canvas>
-<div class="shade" id="shade"></div>
+<div class="shade" id="shade" hidden></div>
 <div class="modal" id="chal" hidden>
   <div class="modal-card" role="dialog" aria-labelledby="chalText">
     <p class="lbl">Challenge</p>
@@ -163,6 +171,7 @@ input::placeholder{color:#7d8280}
       <div class="me"><label class="lbl" for="nameIn">Your name</label><input id="nameIn" maxlength="16" placeholder="e.g. King" autocomplete="off">
         <div class="lvlrow"><b id="lvl">Lv 1</b><div class="xpbar"><i id="xpfill"></i></div><span id="xptext">0 / 150 XP</span></div></div>
     </header>
+    <div class="hero" aria-hidden="true"></div>
 
     <nav class="tabs" role="tablist" aria-label="Menu">
       <button class="tab" type="button" role="tab" aria-selected="true" data-pane="panePlay">Play</button>
@@ -1214,7 +1223,7 @@ function tableMat(key){
   tableMats[key] = new THREE.MeshStandardMaterial({map, roughness: 0.45});
   return tableMats[key];
 }
-let currentTable = null, tableKey = 'arena';
+let currentTable = null, tableKey = 'frat';
 try { const t = localStorage.getItem('bd-table'); if (TABLES.some(x => x.key === t)) tableKey = t; } catch(e){}
 function applyTable(key){
   if (!TABLES.some(t => t.key === key)) key = 'arena';
@@ -1323,10 +1332,12 @@ function frame(now){
   const inGame = !$('hud').hidden, target = inGame ? 1 : 0;
   const moving = Math.abs(target - camBlend) > 0.001;
   camBlend += (target - camBlend) * Math.min(1, dt*2.2);
-  const a = Math.sin(now*0.00009) * 0.55, R = 16.5;
-  lobbyPos.set(Math.sin(a)*R, 7.2, Math.cos(a)*R*0.9);
+  const a = Math.sin(now*0.00009) * 0.5, R = 11.5, wide = W >= 900;
+  lobbyPos.set(Math.sin(a)*R + (wide ? -3.2 : 0), 10.5, Math.cos(a)*R*0.85 + 1);
+  lobbyLook.set(wide ? -3.6 : 0, wide ? TH - 0.4 : TH - 3.4, wide ? 0 : 2.0);   // on phones the table sits in the window under the title
   camera.position.copy(lobbyPos).lerp(GAME_CAM.pos, camBlend);
   camera.lookAt(lookTmp.copy(lobbyLook).lerp(GAME_CAM.look, camBlend));
+  renderer.toneMappingExposure = 1.0 + (1 - camBlend) * 0.55;   // the menu is lit brighter than play
   const shaky = inGame && G && G.phase === 'aim' && !spectator && G.thrower === mySide && G.armed && G.armed[other(mySide)] && G.armed[other(mySide)].shaky;
   const shakenFlight = inGame && G && G.phase === 'flight' && G.shot && G.shot.shaken && !spectator && G.thrower === mySide;
   if (shaky || shakenFlight) {
@@ -1436,9 +1447,9 @@ requestAnimationFrame(frame);
 $('loading').hidden = true;
 
 // ---------- screens ----------
-function showGame(){ $('lobby').hidden = true; $('hud').hidden = false; render(); }
+function showGame(){ $('lobby').hidden = true; $('hud').hidden = false; $('shade').hidden = false; render(); }
 function showLobby(){
-  $('hud').hidden = true; $('lobby').hidden = false;
+  $('hud').hidden = true; $('lobby').hidden = false; $('shade').hidden = true;
   mode = null; G = null; spectator = false; mySide = 'A'; myId = 'me'; clearTimers(); setStatus('menu'); applyArena(arenaKey); applyTable(tableKey); $('shade').classList.remove('shaken');
   aimKey = null; D = null; V = null; stage = 0; swipe = null; trail = null;
 }
