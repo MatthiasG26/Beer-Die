@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c0e0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Beer Die</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=Caveat:wght@600&display=swap">
+<style>
+/* Layout: the 3D basement fills the screen; a broadcast-style score bug up top, one status line and one control at the bottom. Single deliberate dark look. */
+:root{
+  --ink:#0c0e0f; --glass:rgba(12,14,15,.74); --glass-2:rgba(22,25,27,.86); --line:rgba(255,255,255,.12);
+  --text:#f3f1ec; --muted:#a4a8a6; --red:#d9362c; --gold:#e8b04a; --good:#7fd29b;
+  --display:"Big Shoulders Display", "Oswald", "Arial Narrow", sans-serif;
+  --ui:"IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--ink);color:var(--text);font-family:var(--ui);font-size:15px;overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+#gl,#ov{position:fixed;inset:0;width:100%;height:100%;display:block}
+#ov{touch-action:none}
+.shade{position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%)}
+button{font-family:var(--ui);font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:0;border-radius:4px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+input{font:500 17px var(--ui);background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:11px 12px;box-sizing:border-box;width:100%;min-width:0}
+input::placeholder{color:#7d8280}
+
+/* lobby */
+.lobby{position:fixed;inset:0;overflow:auto;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 20px) 28px;box-sizing:border-box;background:linear-gradient(90deg, rgba(8,9,10,.92) 0%, rgba(8,9,10,.78) 38%, rgba(8,9,10,.15) 70%, transparent)}
+.lobby-in{max-width:400px;display:flex;flex-direction:column;gap:22px}
+@media (min-width:900px){.lobby{padding-inline:56px;padding-block:56px}}
+.eyebrow{font:600 12px var(--ui);letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:0}
+.brand{font:900 clamp(64px,16vw,112px)/.82 var(--display);text-transform:uppercase;margin:6px 0 0;letter-spacing:-.01em}
+.tag{font-size:16px;color:var(--muted);margin:10px 0 0;line-height:1.45;max-width:34ch}
+.grp{display:flex;flex-direction:column;gap:10px}
+.lbl{font:600 11px var(--ui);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row > *{flex:1 1 140px}
+.btn-main{background:var(--text);color:var(--ink);padding:14px 16px;font-size:15px}
+.btn-main:hover{background:#fff}
+.btn-sec{background:transparent;color:var(--text);border:1px solid var(--line);padding:13px 14px;font-size:14px}
+.btn-sec:hover{border-color:rgba(255,255,255,.35)}
+.btn-main:disabled,.btn-sec:disabled{opacity:.4;cursor:default}
+.games{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.game-row{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:10px 0}
+.game-row .who{flex:1;min-width:0;font:500 16px var(--ui);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.game-row code{font:700 16px var(--display);color:var(--gold);letter-spacing:.14em}
+.game-row button{background:var(--good);color:#0b1a10;padding:8px 14px;font-size:13px}
+.empty{color:var(--muted);font-size:14px;margin:10px 0 0}
+.rules{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;color:var(--muted)}
+.rules dt{font:800 15px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--text)}
+.rules dd{margin:0;line-height:1.4}
+.note{font-size:13px;color:var(--muted);margin:0;line-height:1.45}
+
+/* HUD */
+.hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 12px) calc(env(safe-area-inset-bottom,0px) + 14px);box-sizing:border-box}
+.bug{align-self:center;display:grid;grid-template-columns:auto auto auto;align-items:stretch;background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:4px;overflow:hidden;max-width:100%}
+.team{display:flex;align-items:center;gap:12px;padding:6px 14px;min-width:0}
+.team .nm{font:600 13px var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);max-width:26vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.team .sc{font:800 34px/1 var(--display);font-variant-numeric:tabular-nums;min-width:.6em;text-align:center}
+.team.turn .nm{color:var(--text)}
+.team.turn{box-shadow:inset 0 -3px 0 var(--red)}
+.mid{display:flex;align-items:center;padding:0 12px;border-inline:1px solid var(--line);font:600 11px var(--ui);letter-spacing:.18em;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.banner{position:fixed;left:50%;top:22%;transform:translateX(-50%);text-align:center;width:92%;pointer-events:none}
+.banner .big{display:block;font:900 clamp(48px,12vw,96px)/.9 var(--display);text-transform:uppercase;letter-spacing:.01em;text-shadow:0 2px 24px rgba(0,0,0,.55)}
+.banner .sub{display:inline-block;margin-top:10px;font:500 15px var(--ui);letter-spacing:.06em;color:var(--text);background:var(--glass);padding:6px 12px;border-radius:3px}
+.foot{display:flex;flex-direction:column;align-items:center;gap:10px}
+.status{font:500 15px var(--ui);color:var(--text);text-align:center;margin:0;max-width:38ch;text-shadow:0 1px 8px rgba(0,0,0,.8);min-height:20px}
+.controls{display:flex;gap:8px;pointer-events:auto}
+.leave{background:var(--glass);border:1px solid var(--line);color:var(--muted);padding:10px 14px;font-size:12px}
+.act{background:var(--text);color:var(--ink);font-size:15px;padding:11px 26px}
+.loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--muted);font:500 14px var(--ui);letter-spacing:.1em;text-transform:uppercase;pointer-events:none}
+</style>
+</head>
+<body>
+
+<canvas id="gl"></canvas>
+<canvas id="ov"></canvas>
+<div class="shade"></div>
+<div class="loading" id="loading">Setting up the table…</div>
+
+<section class="lobby" id="lobby">
+  <div class="lobby-in">
+    <div>
+      <p class="eyebrow">Basement rules · 1 v 1</p>
+      <h1 class="brand">Beer<br>Die</h1>
+      <p class="tag">Flick it high, land it on their half, and make them drop it. Play a friend live or warm up against the CPU.</p>
+    </div>
+
+    <div class="grp">
+      <label class="lbl" for="nameIn">Your name</label>
+      <input id="nameIn" maxlength="16" placeholder="e.g. King" autocomplete="off">
+    </div>
+
+    <div class="grp">
+      <p class="lbl">Play</p>
+      <div class="row">
+        <button class="btn-main" id="hostBtn">Host a game</button>
+        <button class="btn-sec" id="cpuBtn">Practice vs CPU</button>
+      </div>
+      <div class="row">
+        <input id="codeIn" maxlength="4" placeholder="Game code" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em">
+        <button class="btn-sec" id="joinBtn">Join by code</button>
+      </div>
+      <p class="note" id="netNote"></p>
+    </div>
+
+    <div class="grp">
+      <p class="lbl">Open games</p>
+      <div class="games" id="games"><p class="empty">Looking for games…</p></div>
+    </div>
+
+    <div class="grp">
+      <p class="lbl">House rules</p>
+      <dl class="rules">
+        <dt>Throw</dt><dd>Swipe up. Angle is aim, length is power.</dd>
+        <dt>Drop</dt><dd>Lands on their half and they don't catch it: +1.</dd>
+        <dt>Catch</dt><dd>Tap the die while its ring is green.</dd>
+        <dt>FIFA</dt><dd>Only when the die goes off the table untouched: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
+        <dt>Plink</dt><dd>Hit a cup: +1.</dd>
+        <dt>Sink</dt><dd>In the cup: +3. First to 7 wins.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="hud" id="hud" hidden>
+  <div class="bug">
+    <div class="team" id="sideMe"><span class="nm" id="nmMe">You</span><span class="sc" id="scMe">0</span></div>
+    <div class="mid" id="toLbl">First to 7</div>
+    <div class="team" id="sideOpp"><span class="sc" id="scOpp">0</span><span class="nm" id="nmOpp">Opponent</span></div>
+  </div>
+  <div class="banner" id="banner"></div>
+  <div class="foot">
+    <p class="status" id="status"></p>
+    <div class="controls">
+      <button class="leave" id="leaveBtn">Leave</button>
+      <button class="act" id="actBtn" hidden>Rematch</button>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script>
+(() => {
+const $ = s => document.getElementById(s);
+const FLIGHT = 1100, BOUNCE = 480, CATCH_MS = 1250, FALL_MS = 520, KICK_MS = 900, RESULT_MS = 2400, TARGET = 7;
+const KICKZ = -0.45, FLOOR = -0.625;         // game z: 1 unit = 4 ft; floor is 2.5 ft below the tabletop
+const CUPS = [[-0.8,0.08],[0.8,0.08],[-0.8,0.92],[0.8,0.92]];
+
+// ---------- identity ----------
+let myName = '';
+try { myName = localStorage.getItem('bd-name') || ''; } catch(e){}
+$('nameIn').value = myName;
+$('nameIn').addEventListener('input', () => {
+  myName = $('nameIn').value.trim().slice(0,16);
+  try { localStorage.setItem('bd-name', myName); } catch(e){}
+  if (lobbyRoom && hostCode) lobbyRoom.presence({name: nameOr()}).catch(()=>{});
+});
+const nameOr = () => (myName || 'Player').slice(0,16);
+
+// ---------- state ----------
+let mode = null;          // 'cpu' | 'host' | 'guest'
+let mySide = 'A';
+let spectator = false;
+let G = null;
+let room = null, lobbyRoom = null, gameRoom = null, hostCode = null;
+let myPeer = null, guestPeer = null, lastIntent = 0, intentSeq = Date.now();
+const seenAt = {};
+let timers = [];
+const other = s => s === 'A' ? 'B' : 'A';
+const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+
+// ---------- engine (host or CPU mode) ----------
+function newGame(names, bPeer){
+  return {id:0, phase:'aim', thrower: Math.random()<.5?'A':'B', score:{A:0,B:0},
+          target:TARGET, shot:null, msg:'', sub:'', tone:'', names, bPeer: bPeer||null, winner:null};
+}
+function isAuthority(){ return mode === 'cpu' || mode === 'host' || mode === 'local'; }
+function commit(){
+  if (mode === 'host' && gameRoom) gameRoom.presence({game: G}).catch(()=>{});
+  onState();
+}
+
+function doThrow(side, aim, power){
+  if (!G || G.phase !== 'aim' || G.thrower !== side) return;
+  aim = Math.max(-1, Math.min(1, +aim||0)); power = Math.max(0, Math.min(1, +power||0));
+  const lx = aim * 1.18, ly = 0.3 + power * 0.85;
+  let out = 'table', cup = null;
+  if (Math.abs(lx) > 1.0) out = 'wide';
+  else if (ly > 1.0) out = 'long';
+  else if (ly < 0.55) out = 'short';
+  else {
+    for (const c of CUPS) {
+      if (c[1] < 0.5) continue;
+      const d = Math.hypot((lx - c[0]) / 0.15, (ly - c[1]) / 0.055);
+      if (d < 1) { cup = c; out = d < 0.38 ? 'sink' : 'plink'; break; }
+    }
+  }
+  // deeper landings give a shorter catch window
+  const depth = Math.max(0, Math.min(1, (ly - 0.55) / 0.45));
+  const zone = 0.36 - depth * 0.14;
+  const zpos = 0.25 + Math.random() * (0.9 - 0.25 - zone);
+  G.id++;
+  G.shot = {id:G.id, by:side, aim, power, lx, ly, out, cup, zone, zpos, res:null,
+            spin: Math.random()*6, drift:(Math.random()-0.5)*0.8};
+  G.phase = 'flight'; G.msg = ''; G.sub = '';
+  commit();
+  const id = G.id;
+  later(() => resolveFlight(id), FLIGHT + (out === 'table' ? BOUNCE : 400));
+}
+
+function resolveFlight(id){
+  if (!G || !G.shot || G.shot.id !== id || G.phase !== 'flight') return;
+  const s = G.shot, t = s.by;
+  if (s.out === 'table') {
+    G.phase = 'catch'; commit();
+    later(() => doCatch(other(t), 'drop', id), CATCH_MS + FALL_MS*1.4 + KICK_MS*1.3 + 5000);
+    return;
+  }
+  const M = {
+    short:['Short','Landed on the thrower’s own half · no point','bad',0],
+    long:['Long','Sailed off the end · no point','bad',0],
+    wide:['Wide','Missed the table · no point','bad',0],
+    plink:['Plink','Rang the cup · +1','good',1],
+    sink:['Sink','Straight in the cup · +3','great',3]
+  }[s.out];
+  G.score[t] += M[3];
+  finish(M[0], M[1], M[2], id);
+}
+
+function doCatch(side, res, id){
+  if (!G || G.phase !== 'catch' || !G.shot || G.shot.id !== id || side === G.thrower) return;
+  res = res === true ? 'caught' : (res === 'caught' || res === 'fifa') ? res : 'drop';
+  G.shot.res = res;
+  if (res === 'caught') finish('Caught', 'One hand, clean · no point', 'bad', id);
+  else if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked it up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
+  else { G.score[G.thrower] += 1; finish('Dropped', 'Hit the table, not caught · +1', 'good', id); }
+}
+
+function finish(msg, sub, tone, id){
+  G.phase = 'result'; G.msg = msg; G.sub = sub; G.tone = tone;
+  commit();
+  later(() => nextTurn(id), RESULT_MS);
+}
+function nextTurn(id){
+  if (!G || G.shot.id !== id || G.phase !== 'result') return;
+  const w = ['A','B'].find(s => G.score[s] >= G.target);
+  if (w) { G.phase = 'over'; G.winner = w; G.msg = ''; commit(); return; }
+  G.thrower = other(G.thrower); G.phase = 'aim'; G.msg = ''; G.sub = '';
+  commit();
+}
+function rematch(){ if (!G) return; clearTimers(); G = newGame(G.names, G.bPeer); commit(); }
+
+// ---------- CPU ----------
+function cpuTick(){
+  if (mode !== 'cpu' || !G) return;
+  if (G.phase === 'aim' && G.thrower === 'B') {
+    const key = G.id;
+    later(() => {
+      if (!G || G.phase !== 'aim' || G.id !== key) return;
+      const goCup = Math.random() < 0.35, c = Math.random()<.5 ? -0.8 : 0.8;
+      const aimT = goCup ? c/1.18 : (Math.random()*1.1-0.55);
+      const powT = goCup ? (0.92-0.3)/0.85 : 0.55 + Math.random()*0.25;
+      const n = () => (Math.random()+Math.random()+Math.random()-1.5);
+      doThrow('B', aimT + n()*0.16, powT + n()*0.12);
+    }, 1500 + Math.random()*900);
+  }
+  if (G.phase === 'catch' && G.thrower === 'A') {
+    const id = G.shot.id, p = Math.min(0.7, G.shot.zone * 1.8), r = Math.random();
+    if (r < p) later(() => doCatch('B', 'caught', id), CATCH_MS*(G.shot.zpos + G.shot.zone*0.5));
+    else if (r < p + 0.1) later(() => doCatch('B', 'fifa', id), CATCH_MS + FALL_MS*0.8 + KICK_MS*0.6);
+    else later(() => doCatch('B', 'drop', id), CATCH_MS + FALL_MS*1.3);
+  }
+}
+
+// ---------- guest intents ----------
+function sendIntent(type, data){
+  intentSeq++;
+  if (gameRoom) gameRoom.presence({intent: Object.assign({seq:intentSeq, type}, data)}).catch(()=>{});
+}
+function act(type, data){
+  if (isAuthority()) {
+    if (type === 'throw') doThrow(mySide, data.aim, data.power);
+    else if (type === 'catch') doCatch(mySide, data.res, data.id);
+    else if (type === 'rematch') rematch();
+  } else sendIntent(type, data);
+}
+function handleIntent(it){
+  if (!it || typeof it.seq !== 'number' || it.seq <= lastIntent) return;
+  lastIntent = it.seq;
+  if (it.type === 'throw') doThrow('B', it.aim, it.power);
+  else if (it.type === 'catch') doCatch('B', it.res, it.id);
+  else if (it.type === 'rematch' && G && G.phase === 'over') rematch();
+}
+
+// ---------- local play state ----------
+let aimKey = null, stage = 0, sent = false;
+let D = null;   // my defence as it happens: {id, stage:'catch'|'fall'|'kick'|'held'|'dropped', t0, from, at, usedCatch, sent}
+let V = null;   // what everyone else sees of the catch: {id, t0, stop}
+let swipe = null, trail = null, tapFx = null;
+
+function amDefender(){ return G && !spectator && G.thrower !== mySide; }
+
+function onState(){
+  if (!G) { render(); return; }
+  if (mode === 'local' && G.phase !== 'over') mySide = G.phase === 'aim' ? G.thrower : other(G.thrower);
+  const s = G.shot, now = performance.now();
+  if (s && seenAt[s.id] == null) seenAt[s.id] = now - (G.phase === 'flight' ? 0 : FLIGHT + BOUNCE);
+  if (G.phase === 'aim' && G.thrower === mySide && !spectator && aimKey !== G.id) { aimKey = G.id; stage = 1; sent = false; swipe = null; }
+  if (G.phase !== 'aim') { stage = 0; swipe = null; }
+  if (G.phase === 'catch' && s) {
+    if (!V || V.id !== s.id) V = {id:s.id, t0:now, stop:null};
+    if (amDefender() && (!D || D.id !== s.id)) D = {id:s.id, stage:'catch', t0:now, usedCatch:false, sent:false};
+  }
+  if (G.phase === 'result' && s && V && V.id === s.id && V.stop == null) V.stop = (now - V.t0) / CATCH_MS;
+  cpuTick();
+  render();
+}
+
+// ---------- die paths (thrower's frame; x -1..1 across, y 0..1 along, z in 4 ft units) ----------
+function catchPath(s, p){
+  const dr = s.drift || 0;
+  return [s.lx*1.05 + dr*0.6*p, 1.0 + 0.25*p, 0.1 + 1.3*p - 1.5*p*p];
+}
+function fallPos(s, q){
+  const [cx, cy, cz] = catchPath(s, 1), dr = s.drift || 0;
+  if (q <= 1) return [cx + dr*0.05*q, cy + 0.05*q, cz + (KICKZ - cz)*q*q];
+  return [cx + dr*0.05, cy + 0.05, KICKZ + (FLOOR - KICKZ)*Math.min(1, (q-1)*2.5)];
+}
+function kickPos(f, r){
+  return [f[0]*(1 - 0.15*r), f[1] - 0.14*r, Math.max(FLOOR, f[2] + 2.7*r - 2.1*r*r)];
+}
+function dropFrom(a, t){ return [a[0], a[1] + 0.03*t, Math.max(FLOOR, a[2] - 0.6*t - 2.2*t*t)]; }
+
+function defPos(s, now){
+  const t = now - D.t0;
+  if (D.stage === 'catch') return catchPath(s, Math.min(1, t / CATCH_MS));
+  if (D.stage === 'fall') return fallPos(s, t / FALL_MS);
+  if (D.stage === 'kick') return kickPos(D.from, t / KICK_MS);
+  if (D.stage === 'held') return D.at;
+  return dropFrom(D.at, t / 1000);
+}
+function obsPos(s, now){
+  if (!V || V.id !== s.id) return [s.lx, 1.3, FLOOR];
+  const res = (G.phase === 'result' || G.phase === 'over') ? s.res : null;
+  const p = (res && V.stop != null && res !== 'drop') ? V.stop : (now - V.t0) / CATCH_MS;
+  if (res === 'caught') return catchPath(s, Math.min(1, V.stop ?? 0.5));
+  if (res === 'fifa') return kickPos(fallPos(s, 0.8), 0.6);
+  if (p <= 1) return catchPath(s, p);
+  const q = (p - 1) * CATCH_MS / FALL_MS;
+  return fallPos(s, res === 'drop' ? q : Math.min(1, q));
+}
+
+function diePos(now){
+  const s = G && G.shot; if (!s || G.phase === 'aim') return null;
+  const e = now - (seenAt[s.id] ?? now);
+  let x, y, z, spin = s.spin + e*0.012, gone = false, rest = false;
+  const sx = 0, sy = -0.18, sz = 0.55, peak = 0.6 + s.power*0.35;
+  let ex = s.lx, ey = s.ly, ez = 0;
+  if (s.out === 'plink' || s.out === 'sink') { ex = s.cup[0]; ey = s.cup[1]; ez = 0.1; }
+  if (s.out === 'wide' || s.out === 'long') ez = FLOOR;
+  if (e < FLIGHT) {
+    const t = e / FLIGHT;
+    x = sx + (ex-sx)*t; y = sy + (ey-sy)*t; z = sz + (ez-sz)*t + 4*peak*t*(1-t);
+  } else {
+    const e2 = e - FLIGHT;
+    if (s.out === 'table') {
+      const t = Math.min(1, e2 / BOUNCE);
+      x = s.lx*(1 + 0.05*t); y = s.ly + (1.0 - s.ly)*t; z = 0.1*t + 0.25*4*t*(1-t);
+      if (G.phase !== 'flight') {
+        [x, y, z] = (D && D.id === s.id) ? defPos(s, now) : obsPos(s, now);
+        if ((D && D.id === s.id && D.stage === 'held') || (G.phase !== 'catch' && s.res !== 'drop' && !(D && D.id === s.id))) spin = s.spin;
+      }
+    } else if (s.out === 'plink') {
+      const t = Math.min(1, e2/650);
+      x = ex + (ex>0?1:-1)*0.4*t; y = ey + 0.1*t; z = Math.max(FLOOR, 0.1 + 0.9*t*(1-t) - t*0.9);
+    } else if (s.out === 'sink') { x = ex; y = ey; z = 0.05; gone = e2 > 90; }
+    else if (s.out === 'short') { x = ex; y = ey; z = 0; rest = true; }
+    else { x = ex*(1+Math.min(1,e2/400)*0.08); y = ey + (s.out==='long' ? Math.min(1,e2/400)*0.08 : 0); z = FLOOR; rest = true; }
+  }
+  if (z <= FLOOR + 0.001) rest = true;
+  const [vx, vy] = view(s.by, x, y);
+  return {x:vx, y:vy, z, spin, gone, rest, e};
+}
+function view(by, x, y){ const v = spectator ? 'A' : mySide; return by === v ? [x,y] : [-x, 1-y]; }
+
+// ---------- input ----------
+const ov = $('ov'), octx = ov.getContext('2d');
+let W = innerWidth, H = innerHeight;
+function localPt(e){ return {x: e.clientX, y: e.clientY, t: performance.now()}; }
+function myThrowReady(){ return G && G.phase === 'aim' && G.thrower === mySide && !spectator && stage === 1 && !sent; }
+
+function releaseSwipe(){
+  const pts = swipe.pts; swipe = null;
+  if (pts.length < 2) return;
+  const a = pts[0], b = pts[pts.length-1];
+  const up = a.y - b.y, dx = b.x - a.x;
+  if (up < 24) { flashStatus('Swipe up toward their side of the table'); return; }
+  const dur = Math.max(1, b.t - a.t), speed = Math.hypot(dx, up) / dur;
+  const wobble = speed < 0.6 ? (Math.random()-0.5) * 0.12 : (Math.random()-0.5) * 0.04;
+  const aim = Math.max(-1, Math.min(1, (dx / up) * 1.35 + wobble));
+  const power = Math.max(0, Math.min(1, up / (H * 0.5) + (Math.random()-0.5) * 0.04));
+  trail = {pts, t: performance.now()};
+  sent = true; stage = 3;
+  act('throw', {aim, power});
+  render();
+}
+
+// the window that is live right now for my defence, if any
+function defWindow(now){
+  if (!D || !G || !G.shot || D.id !== G.shot.id || G.phase !== 'catch' || D.sent) return null;
+  const s = G.shot, t = now - D.t0;
+  if (D.stage === 'catch') { const p = t / CATCH_MS; return {kind:'catch', live: !D.usedCatch && p >= s.zpos && p <= s.zpos + s.zone, armed: !D.usedCatch}; }
+  if (D.stage === 'fall') { const q = t / FALL_MS; return {kind:'kick', live: q >= 0.35 && q <= 1.12, armed:true}; }
+  if (D.stage === 'kick') { const r = t / KICK_MS; return {kind:'fifa', live: r >= 0.42 && r <= 0.85, armed:true}; }
+  return null;
+}
+function sendDef(res, now, at){
+  D.sent = true; D.at = at; D.t0 = now;
+  D.stage = res === 'drop' ? 'dropped' : 'held';
+  act('catch', {id: D.id, res});
+  render();
+}
+function defTick(now){
+  if (!D || !G || !G.shot || D.id !== G.shot.id || D.sent || G.phase !== 'catch') return;
+  const s = G.shot, t = now - D.t0;
+  if (D.stage === 'catch' && t >= CATCH_MS) { D.stage = 'fall'; D.t0 = now; render(); }
+  else if (D.stage === 'fall' && t >= FALL_MS*1.35) sendDef('drop', now, fallPos(s, t/FALL_MS));
+  else if (D.stage === 'kick' && t >= KICK_MS*1.15) sendDef('drop', now, kickPos(D.from, t/KICK_MS));
+}
+
+ov.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (!G || spectator || $('hud').hidden) return;
+  const p = localPt(e), now = performance.now();
+  if (myThrowReady()) { swipe = {pts:[p]}; try { ov.setPointerCapture(e.pointerId); } catch(_){} return; }
+  const w = defWindow(now);
+  if (!w || !w.armed) return;
+  const d = diePos(now); if (!d) return;
+  const q = proj(d.x, d.y, d.z), hit = Math.hypot(p.x - q.x, p.y - q.y) < Math.max(55, dieSize(q)*3.5);
+  const ok = hit && w.live, s = G.shot, pos = defPos(s, now);
+  tapFx = {x:p.x, y:p.y, t:now, ok};
+  if (w.kind === 'catch') sendDef(ok ? 'caught' : 'drop', now, pos);   // a fumble is a drop: FIFA is only for a die going off the table untouched
+  else if (w.kind === 'kick') { if (ok) { D.stage = 'kick'; D.from = pos; D.t0 = now; kickFx = now; render(); } else sendDef('drop', now, pos); }
+  else if (w.kind === 'fifa') sendDef(ok ? 'fifa' : 'drop', now, pos);
+});
+ov.addEventListener('pointermove', e => { if (swipe) { swipe.pts.push(localPt(e)); if (swipe.pts.length > 80) swipe.pts.splice(1,1); } });
+ov.addEventListener('pointerup', e => { if (swipe) { swipe.pts.push(localPt(e)); releaseSwipe(); } });
+ov.addEventListener('pointercancel', () => { swipe = null; });
+let kickFx = 0;
+
+let flashTimer = null;
+function flashStatus(t){ $('status').textContent = t; clearTimeout(flashTimer); flashTimer = setTimeout(render, 1600); }
+$('actBtn').addEventListener('click', () => { if (G && !spectator && G.phase === 'over') act('rematch', {}); });
+document.addEventListener('keydown', e => {
+  if ($('hud').hidden || !G || G.phase !== 'over') return;
+  if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); act('rematch', {}); }
+});
+
+// ---------- HUD ----------
+function setBanner(big, sub, color){
+  const b = $('banner'); b.innerHTML = '';
+  if (!big) return;
+  const s1 = document.createElement('span'); s1.className = 'big'; s1.textContent = big; s1.style.color = color || 'var(--text)'; b.appendChild(s1);
+  if (sub) { const s2 = document.createElement('span'); s2.className = 'sub'; s2.textContent = sub; b.appendChild(s2); }
+}
+function render(){
+  if (!G) return;
+  const local = mode === 'local';
+  const mine = (spectator || local) ? 'A' : mySide, theirs = other(mine);
+  $('nmMe').textContent = (spectator || local) ? (G.names[mine]||'Player 1') : 'You';
+  $('nmOpp').textContent = G.names[theirs] || 'Opponent';
+  $('scMe').textContent = G.score[mine];
+  $('scOpp').textContent = G.score[theirs];
+  $('sideMe').classList.toggle('turn', G.phase !== 'over' && G.thrower === mine);
+  $('sideOpp').classList.toggle('turn', G.phase !== 'over' && G.thrower === theirs);
+  $('toLbl').textContent = 'First to ' + G.target;
+  const tone = G.tone === 'great' ? 'var(--gold)' : G.tone === 'good' ? 'var(--good)' : 'var(--text)';
+  let status = '';
+  $('actBtn').hidden = true;
+  if (G.phase === 'result') setBanner(G.msg, G.sub, tone);
+  else if (G.phase === 'over') {
+    const won = G.winner === mine && !spectator;
+    setBanner((spectator || local) ? (G.names[G.winner] + ' wins') : (won ? 'You win' : 'You lose'), G.score[mine] + ' – ' + G.score[theirs], (won || local) ? 'var(--gold)' : 'var(--text)');
+    if (!spectator) $('actBtn').hidden = false;
+  } else setBanner('');
+  const opp = G.names[other(mySide)] || 'Opponent';
+  const who = G.names[mySide] || 'Player';
+  if (spectator) status = 'Watching this game';
+  else if (local && G.phase === 'aim') status = who + '’s throw. Swipe up: angle is aim, length is power.';
+  else if (local && (G.phase === 'flight' || G.phase === 'catch')) status = G.phase === 'flight' ? who + ', get ready to catch' : (D && D.stage === 'fall' ? 'FIFA! ' + who + ', tap it before it hits the floor.' : D && D.stage === 'kick' ? 'It’s up. Tap it again to catch it.' : who + ', tap the die when its ring turns green.');
+  else if (G.phase === 'aim') status = G.thrower === mySide ? (stage === 1 ? 'Your throw. Swipe up: angle is aim, length is power.' : 'Throwing…') : opp + ' is lining up a throw…';
+  else if (G.phase === 'flight') status = G.thrower === mySide ? '' : 'Incoming…';
+  else if (G.phase === 'catch') {
+    if (G.thrower === mySide) status = opp + ' is going for it…';
+    else if (D && D.stage === 'catch') status = 'Tap the die when its ring turns green. Let it go and you can still FIFA it.';
+    else if (D && D.stage === 'fall') status = 'It’s going off the table. FIFA: tap it right before it hits the floor.';
+    else if (D && D.stage === 'kick') status = 'It’s up. Tap it again to catch it.';
+  }
+  $('status').textContent = status;
+}
+
+// ---------- 3D scene ----------
+if (!window.THREE) { $('loading').textContent = 'The 3D table couldn’t load. Check your connection and reload.'; return; }
+const glc = $('gl');
+const renderer = new THREE.WebGLRenderer({canvas: glc, antialias: true, powerPreference: 'high-performance'});
+renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x08090a);
+scene.fog = new THREE.Fog(0x08090a, 22, 44);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 120);
+const TH = 2.5; // tabletop height in feet
+const G2W = (x, y, z) => new THREE.Vector3(x*2, TH + z*4, 4 - y*8);
+const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
+function canvasTex(w, h, draw, repeat, srgb = true){
+  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = maxAniso;
+  if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); }
+  return t;
+}
+const rnd = (a, b) => a + Math.random()*(b-a);
+
+// plywood: long grain, a couple of knots, old cup rings
+const woodMap = canvasTex(512, 1024, (g, w, h) => {
+  g.fillStyle = '#c29a63'; g.fillRect(0,0,w,h);
+  for (let i=0;i<70;i++){ g.fillStyle = `rgba(${rnd(110,170)|0},${rnd(72,110)|0},${rnd(35,60)|0},${rnd(.04,.12)})`; g.fillRect(rnd(0,w), 0, rnd(6,50), h); }
+  for (let i=0;i<320;i++){ let x = rnd(0,w); g.strokeStyle = `rgba(86,52,22,${rnd(.04,.16)})`; g.lineWidth = rnd(.5,1.6); g.beginPath(); g.moveTo(x,0);
+    for (let y=0;y<=h;y+=24){ x += rnd(-1.5,1.5) + Math.sin(y*0.006 + i)*0.9; g.lineTo(x,y); } g.stroke(); }
+  for (let k=0;k<4;k++){ const x=rnd(30,w-30), y=rnd(0,h); const r=g.createRadialGradient(x,y,0,x,y,22); r.addColorStop(0,'rgba(70,38,16,.6)'); r.addColorStop(1,'rgba(70,38,16,0)'); g.fillStyle=r; g.beginPath(); g.ellipse(x,y,12,34,0,0,7); g.fill(); }
+  for (let r=0;r<9;r++){ const x=rnd(40,w-40), y=rnd(20,h-20), rad=rnd(18,26); g.strokeStyle=`rgba(95,58,24,${rnd(.08,.18)})`; g.lineWidth=rnd(2,4); g.beginPath(); g.arc(x,y,rad,rnd(0,6),rnd(3,9)); g.stroke(); }
+  for (let i=0;i<1600;i++){ g.fillStyle=`rgba(60,35,15,${rnd(0,.08)})`; g.fillRect(rnd(0,w),rnd(0,h),rnd(1,3),rnd(1,6)); }
+});
+const woodRough = canvasTex(256, 512, (g, w, h) => {
+  g.fillStyle = '#9a9a9a'; g.fillRect(0,0,w,h);
+  for (let i=0;i<600;i++){ const v = rnd(110,200)|0; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(rnd(0,w),rnd(0,h),rnd(1,4),rnd(4,40)); }
+  for (let r=0;r<8;r++){ g.strokeStyle='rgba(40,40,40,.5)'; g.lineWidth=3; g.beginPath(); g.arc(rnd(20,w-20),rnd(20,h-20),rnd(9,13),0,7); g.stroke(); }
+}, null, false);
+const concreteMap = canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#6e6962'; g.fillRect(0,0,w,h);
+  for (let i=0;i<40;i++){ const x=rnd(0,w), y=rnd(0,h), r=rnd(30,120); const gr=g.createRadialGradient(x,y,0,x,y,r); const d=rnd(-1,1)>0; gr.addColorStop(0, d?'rgba(40,36,32,.18)':'rgba(150,145,138,.12)'); gr.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=gr; g.fillRect(0,0,w,h); }
+  for (let i=0;i<9000;i++){ const v=rnd(60,150)|0; g.fillStyle=`rgba(${v},${v-4},${v-8},${rnd(.1,.35)})`; g.fillRect(rnd(0,w),rnd(0,h),1.2,1.2); }
+  g.strokeStyle='rgba(30,28,25,.55)'; g.lineWidth=2; g.strokeRect(0,0,w,h);
+}, [5,5]);
+const blockMap = canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#b9b3a7'; g.fillRect(0,0,w,h);
+  for (let i=0;i<5000;i++){ const v=rnd(150,200)|0; g.fillStyle=`rgba(${v},${v-4},${v-10},${rnd(.08,.3)})`; g.beginPath(); g.arc(rnd(0,w),rnd(0,h),rnd(.6,2),0,7); g.fill(); }
+  g.fillStyle = 'rgba(95,90,82,.9)';
+  for (let r=0;r<4;r++){ g.fillRect(0, r*128, w, 5); const off = r%2 ? 128 : 0; for (let c=0;c<3;c++) g.fillRect((off + c*256) % w, r*128, 5, 128); }
+  for (let i=0;i<14;i++){ g.fillStyle=`rgba(80,70,55,${rnd(.04,.1)})`; g.fillRect(rnd(0,w), rnd(0,h), rnd(2,5), rnd(30,120)); }
+}, [15, 4.5]);
+const fabricMap = canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#6a7560'; g.fillRect(0,0,w,h);
+  for (let y=0;y<h;y+=2){ g.fillStyle=`rgba(0,0,0,${rnd(.05,.15)})`; g.fillRect(0,y,w,1); }
+  for (let x=0;x<w;x+=2){ g.fillStyle=`rgba(255,255,255,${rnd(0,.04)})`; g.fillRect(x,0,1,h); }
+}, [4,2]);
+function dieFace(n){
+  return canvasTex(128, 128, (g, w, h) => {
+    const gr = g.createLinearGradient(0,0,w,h); gr.addColorStop(0,'#fbfaf5'); gr.addColorStop(1,'#e7e4da');
+    g.fillStyle = gr; g.fillRect(0,0,w,h);
+    g.strokeStyle='rgba(0,0,0,.18)'; g.lineWidth=6; g.strokeRect(0,0,w,h);
+    const P = {1:[[.5,.5]],2:[[.27,.27],[.73,.73]],3:[[.25,.25],[.5,.5],[.75,.75]],4:[[.27,.27],[.73,.27],[.27,.73],[.73,.73]],5:[[.25,.25],[.75,.25],[.5,.5],[.25,.75],[.75,.75]],6:[[.27,.22],[.73,.22],[.27,.5],[.73,.5],[.27,.78],[.73,.78]]}[n];
+    P.forEach(([x,y]) => { const r = n===1 ? 14 : 10; const pg = g.createRadialGradient(x*w-2,y*h-2,1,x*w,y*h,r); pg.addColorStop(0,'#3a3a3a'); pg.addColorStop(1,'#0e0e0e'); g.fillStyle = n===1 ? '#b3261e' : pg; g.beginPath(); g.arc(x*w,y*h,r,0,7); g.fill(); });
+  });
+}
+// chalkboard with the house rules
+let boardTex = null;
+function drawBoard(g, w, h){
+  g.fillStyle = '#23302a'; g.fillRect(0,0,w,h);
+  for (let i=0;i<60;i++){ g.fillStyle=`rgba(255,255,255,${rnd(.01,.035)})`; g.beginPath(); g.ellipse(rnd(0,w),rnd(0,h),rnd(20,90),rnd(6,20),rnd(0,3),0,7); g.fill(); }
+  g.strokeStyle='#6b4a2a'; g.lineWidth=22; g.strokeRect(0,0,w,h);
+  g.fillStyle='rgba(240,238,228,.9)'; g.textAlign='left';
+  g.font='600 64px Caveat, cursive'; g.fillText('House Rules', 44, 96);
+  g.font='600 42px Caveat, cursive';
+  ['Drop ........ 1','Plink ....... 1','Sink ......... 3','FIFA ......... 1','Game to 7','No re-throws'].forEach((t,i)=> g.fillText(t, 52, 170 + i*56));
+}
+boardTex = canvasTex(512, 520, drawBoard);
+if (document.fonts && document.fonts.load) document.fonts.load('600 40px Caveat').then(() => { const c = boardTex.image; drawBoard(c.getContext('2d'), c.width, c.height); boardTex.needsUpdate = true; }).catch(()=>{});
+
+// materials
+const M = {
+  wood: new THREE.MeshStandardMaterial({map: woodMap, roughnessMap: woodRough, roughness: 0.62, metalness: 0}),
+  frame: new THREE.MeshStandardMaterial({color: 0x8a6a42, roughness: 0.75}),
+  floor: new THREE.MeshStandardMaterial({map: concreteMap, roughness: 0.82}),
+  wall: new THREE.MeshStandardMaterial({map: blockMap, roughness: 0.95}),
+  tape: new THREE.MeshStandardMaterial({color: 0xecebe4, roughness: 0.55}),
+  cupOut: new THREE.MeshPhysicalMaterial({color: 0xc4231a, roughness: 0.32, clearcoat: 0.5, clearcoatRoughness: 0.35, side: THREE.FrontSide}),
+  cupIn: new THREE.MeshStandardMaterial({color: 0xf2efe8, roughness: 0.4, side: THREE.BackSide}),
+  rim: new THREE.MeshStandardMaterial({color: 0xf2efe8, roughness: 0.35}),
+  beer: new THREE.MeshPhysicalMaterial({color: 0xc98a1c, roughness: 0.12, clearcoat: 1, emissive: 0x3a2204, emissiveIntensity: 0.6}),
+  foam: new THREE.MeshStandardMaterial({color: 0xf4ecd8, roughness: 0.9}),
+  fabric: new THREE.MeshStandardMaterial({map: fabricMap, roughness: 0.98}),
+  metal: new THREE.MeshStandardMaterial({color: 0x1b1c1e, roughness: 0.45, metalness: 0.8}),
+  can: new THREE.MeshStandardMaterial({color: 0xb9c0c6, roughness: 0.25, metalness: 0.9}),
+  canBlue: new THREE.MeshStandardMaterial({color: 0x1f4f9c, roughness: 0.35, metalness: 0.6}),
+  cooler: new THREE.MeshStandardMaterial({color: 0x9e2320, roughness: 0.5}),
+  coolerLid: new THREE.MeshStandardMaterial({color: 0xeeeeea, roughness: 0.5}),
+  bulb: new THREE.MeshBasicMaterial({color: 0xffd79a}),
+  wire: new THREE.LineBasicMaterial({color: 0x111111}),
+  board: new THREE.MeshStandardMaterial({map: boardTex, roughness: 0.95}),
+};
+const shadowy = (m, cast = true, recv = true) => { m.castShadow = cast; m.receiveShadow = recv; return m; };
+const box = (w, h, d, mat, x, y, z) => { const m = shadowy(new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat)); m.position.set(x,y,z); scene.add(m); return m; };
+
+// room
+const floor = shadowy(new THREE.Mesh(new THREE.PlaneGeometry(40, 40), M.floor), false, true);
+floor.rotation.x = -Math.PI/2; scene.add(floor);
+const back = shadowy(new THREE.Mesh(new THREE.PlaneGeometry(40, 13.5), M.wall), false, true); back.position.set(0, 6.75, -13); scene.add(back);
+[-11, 11].forEach(x => { const w = shadowy(new THREE.Mesh(new THREE.PlaneGeometry(40, 13.5), M.wall), false, true); w.position.set(x, 6.75, 7); w.rotation.y = x < 0 ? Math.PI/2 : -Math.PI/2; scene.add(w); });
+
+// table: plywood top on a 2x4 frame
+box(4, 0.08, 8, M.wood, 0, TH - 0.04, 0);
+box(4, 0.3, 0.12, M.frame, 0, TH - 0.23, 3.94); box(4, 0.3, 0.12, M.frame, 0, TH - 0.23, -3.94);
+box(0.12, 0.3, 8, M.frame, 1.94, TH - 0.23, 0); box(0.12, 0.3, 8, M.frame, -1.94, TH - 0.23, 0);
+[[1.72,3.72],[-1.72,3.72],[1.72,-3.72],[-1.72,-3.72],[1.72,0],[-1.72,0]].forEach(([x,z]) => box(0.29, TH - 0.08, 0.14, M.frame, x, (TH - 0.08)/2, z));
+box(3.3, 0.14, 0.29, M.frame, 0, 0.6, 3.72); box(3.3, 0.14, 0.29, M.frame, 0, 0.6, -3.72);
+const tape = new THREE.Mesh(new THREE.PlaneGeometry(4, 0.11), M.tape); tape.rotation.x = -Math.PI/2; tape.position.set(0, TH + 0.002, 0); tape.receiveShadow = true; scene.add(tape);
+
+// cups: a solo cup lathed from its real profile (in feet)
+const prof = [[0,0.004],[0.1,0.0],[0.106,0.012],[0.113,0.06],[0.118,0.1],[0.124,0.104],[0.128,0.15],[0.134,0.156],[0.139,0.21],[0.145,0.216],[0.156,0.385],[0.158,0.39]].map(p => new THREE.Vector2(p[0], p[1]));
+const cupGeo = new THREE.LatheGeometry(prof, 48), cupInGeo = new THREE.LatheGeometry(prof.map(v => new THREE.Vector2(v.x*0.96, v.y + 0.006)), 48);
+const cups = CUPS.map(([cx, cy]) => {
+  const g = new THREE.Group(); const p = G2W(cx, cy, 0); g.position.copy(p);
+  g.add(shadowy(new THREE.Mesh(cupGeo, M.cupOut)));
+  g.add(shadowy(new THREE.Mesh(cupInGeo, M.cupIn), false, true));
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.158, 0.007, 8, 48), M.rim); rim.rotation.x = Math.PI/2; rim.position.y = 0.39; g.add(rim);
+  const beer = new THREE.Mesh(new THREE.CircleGeometry(0.143, 40), M.beer); beer.rotation.x = -Math.PI/2; beer.position.y = 0.3; g.add(beer);
+  const foam = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.144, 40), M.foam); foam.rotation.x = -Math.PI/2; foam.position.y = 0.301; g.add(foam);
+  scene.add(g); return {g, cx, cy, beer};
+});
+
+// the die: 5/8" is invisible from 15 ft, so it is scaled up a little
+const DIE = 0.17;
+const die = shadowy(new THREE.Mesh(new THREE.BoxGeometry(DIE, DIE, DIE), [1,6,2,5,3,4].map(n => new THREE.MeshStandardMaterial({map: dieFace(n), roughness: 0.28}))), true, false);
+die.visible = false; scene.add(die);
+
+// props: couch, cooler, cans, chalkboard, string lights
+box(7.5, 1.3, 3, M.fabric, -3, 0.65, -11.2); box(7.5, 2.2, 0.8, M.fabric, -3, 1.6, -12.5);
+box(0.8, 1.9, 3, M.fabric, -6.9, 0.95, -11.2); box(0.8, 1.9, 3, M.fabric, 0.9, 0.95, -11.2);
+box(2.1, 1.25, 1.3, M.cooler, 5.2, 0.63, 1.2); box(2.2, 0.18, 1.4, M.coolerLid, 5.2, 1.32, 1.2);
+const canGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.4, 24);
+[[4.2,2.8,M.can,0],[4.5,3.1,M.canBlue,0],[-3.6,-1.5,M.can,1],[3.2,-5.2,M.canBlue,1]].forEach(([x,z,m,down]) => {
+  const c = shadowy(new THREE.Mesh(canGeo, m)); c.position.set(x, down ? 0.11 : 0.2, z); if (down) { c.rotation.z = Math.PI/2; c.rotation.y = rnd(0,3); } scene.add(c);
+});
+const board = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 3.15), M.board); board.position.set(5.5, 6.2, -12.93); scene.add(board);
+const bulbs = [];
+{
+  const pts = [];
+  for (let i=0;i<=26;i++){ const t=i/26, x=-10+20*t, y=9.4 - Math.sin(t*Math.PI)*1.1 - Math.sin(t*Math.PI*3)*0.25; pts.push(new THREE.Vector3(x, y, -12.8));
+    if (i%1===0 && i>0 && i<26){ const b = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 8), M.bulb); b.position.set(x, y-0.14, -12.75); scene.add(b); bulbs.push(b); } }
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), M.wire));
+}
+
+// lighting: one hanging shop light over the table, warm string lights, cool bounce
+scene.add(new THREE.HemisphereLight(0xc9d6e3, 0x2b2118, 0.28));
+const lamp = new THREE.SpotLight(0xffdcae, 2.1, 34, 0.95, 0.55, 1.2);
+lamp.position.set(0, TH + 6.2, 0); lamp.target.position.set(0, 0, 0);
+lamp.castShadow = true; lamp.shadow.mapSize.set(2048, 2048); lamp.shadow.bias = -0.0004; lamp.shadow.radius = 4; lamp.shadow.camera.near = 1; lamp.shadow.camera.far = 20;
+scene.add(lamp, lamp.target);
+const lamp2 = new THREE.PointLight(0xffd2a0, 0.35, 16, 1.6); lamp2.position.set(0, TH + 5.7, 0); scene.add(lamp2);
+const glow = new THREE.PointLight(0xffc07a, 0.7, 16, 1.8); glow.position.set(0, 8.2, -11.5); scene.add(glow);
+const rimLight = new THREE.DirectionalLight(0x8fb2ff, 0.18); rimLight.position.set(-6, 9, -12); scene.add(rimLight);
+{
+  const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.95, 0.65, 40, 1, true), new THREE.MeshStandardMaterial({color: 0x2b3a33, roughness: 0.5, metalness: 0.6, side: THREE.DoubleSide}));
+  shade.position.set(0, TH + 6.45, 0); scene.add(shade);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), new THREE.MeshBasicMaterial({color: 0xfff1d6})); bulb.position.set(0, TH + 6.28, 0); scene.add(bulb);
+  const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 3, 6), M.metal); cord.position.set(0, TH + 8.3, 0); scene.add(cord);
+}
+
+// sink splash droplets
+const drops = [];
+const dropGeo = new THREE.SphereGeometry(0.022, 8, 6);
+function splash(p){ for (let i=0;i<18;i++){ const m = new THREE.Mesh(dropGeo, M.foam); m.position.copy(p); m.userData.v = new THREE.Vector3(rnd(-1,1)*0.9, rnd(1.6,3.2), rnd(-1,1)*0.9); m.userData.t = 0; scene.add(m); drops.push(m); } }
+const splashed = {};
+
+// ---------- camera ----------
+const GAME_CAM = {pos: G2W(0, -1.375, 1.375), look: G2W(0, 0.375, -0.075)};   // ~15 ft back, 8 ft up
+let camBlend = 0;
+function fitCamera(){
+  W = innerWidth; H = innerHeight;
+  renderer.setSize(W, H, false);
+  const d = Math.min(2, devicePixelRatio || 1);
+  ov.width = W*d; ov.height = H*d; octx.setTransform(d,0,0,d,0,0);
+  const F = Math.min(W*1.5, H*1.25);
+  camera.fov = 2 * Math.atan(H / (2*F)) * 180 / Math.PI; camera.aspect = W / H; camera.updateProjectionMatrix();
+}
+addEventListener('resize', fitCamera); fitCamera();
+const tmpV = new THREE.Vector3();
+function proj(x, y, z){
+  const w = G2W(x, y, z); w.y += DIE/2;
+  const dist = w.distanceTo(camera.position);
+  tmpV.copy(w).project(camera);
+  const f = H / 2 / Math.tan(camera.fov * Math.PI / 360);
+  return {x: (tmpV.x + 1)/2*W, y: (1 - tmpV.y)/2*H, k: f / dist};
+}
+const dieSize = q => Math.max(8, DIE * q.k);
+
+// ---------- frame ----------
+let lastT = performance.now();
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+  const inGame = !$('hud').hidden;
+  camBlend += ((inGame ? 1 : 0) - camBlend) * Math.min(1, dt*2.2);
+  const a = Math.sin(now*0.00009) * 0.55, R = 16.5;
+  const lobbyPos = new THREE.Vector3(Math.sin(a)*R, 7.2, Math.cos(a)*R*0.9);
+  const lobbyLook = new THREE.Vector3(0, TH, 0);
+  camera.position.copy(lobbyPos).lerp(GAME_CAM.pos, camBlend);
+  camera.lookAt(lobbyLook.clone().lerp(GAME_CAM.look, camBlend));
+
+  if (inGame && G) defTick(now);
+  const d = inGame && G ? diePos(now) : null;
+  if (d && !d.gone) {
+    die.visible = true;
+    die.position.copy(G2W(d.x, d.y, d.z)); die.position.y += DIE/2;
+    if (d.rest) { die.rotation.set(0, d.spin, 0); }
+    else { die.rotation.set(d.spin, d.spin*0.7, d.spin*0.35); }
+  } else die.visible = false;
+
+  // cup wobble on a plink, splash on a sink
+  cups.forEach(c => c.g.rotation.set(0,0,0));
+  const s = G && G.shot;
+  if (inGame && s && (s.out === 'plink' || s.out === 'sink') && G.phase !== 'aim' && d) {
+    const [vx, vy] = view(s.by, s.cup[0], s.cup[1]);
+    const c = cups.find(c => Math.abs(c.cx - vx) < .01 && Math.abs(c.cy - vy) < .01);
+    const e2 = d.e - FLIGHT;
+    if (c && s.out === 'plink' && e2 > 0 && e2 < 700) { const k = 1 - e2/700; c.g.rotation.z = Math.sin(e2*0.045)*0.14*k; c.g.rotation.x = Math.cos(e2*0.05)*0.06*k; }
+    if (c && s.out === 'sink' && e2 > 60 && !splashed[s.id]) { splashed[s.id] = true; splash(c.g.position.clone().add(new THREE.Vector3(0, 0.32, 0))); }
+  }
+  for (let i=drops.length-1;i>=0;i--){ const m = drops[i]; m.userData.t += dt; m.userData.v.y -= 9*dt; m.position.addScaledVector(m.userData.v, dt);
+    if (m.userData.t > 0.9 || m.position.y < TH) { scene.remove(m); drops.splice(i,1); } }
+  bulbs.forEach((b, i) => { b.scale.setScalar(0.92 + 0.08*Math.sin(now*0.002 + i*1.7)); });
+
+  renderer.render(scene, camera);
+  drawOverlay(now, d);
+}
+
+function drawOverlay(now, d){
+  octx.clearRect(0,0,W,H);
+  if ($('hud').hidden || !G) return;
+  // swipe hint
+  if (myThrowReady() && !swipe) {
+    const k = (now % 1500) / 1500, x0 = W/2, y0 = H*0.86, len = Math.min(H*0.24, 190);
+    octx.globalAlpha = 0.8 * (1 - k); octx.strokeStyle = '#f3f1ec'; octx.lineWidth = 2.5; octx.lineCap = 'round';
+    const ty = y0 - len*(0.35 + k*0.65);
+    octx.beginPath(); octx.moveTo(x0, y0 - len*k*0.35); octx.lineTo(x0, ty); octx.stroke();
+    octx.beginPath(); octx.moveTo(x0-8, ty+9); octx.lineTo(x0, ty); octx.lineTo(x0+8, ty+9); octx.stroke();
+    octx.globalAlpha = 1;
+  }
+  const t = swipe ? {pts: swipe.pts, a: 1} : (trail && now - trail.t < 450 ? {pts: trail.pts, a: 1 - (now - trail.t)/450} : null);
+  if (t && t.pts.length > 1) {
+    octx.strokeStyle = `rgba(243,241,236,${0.55*t.a})`; octx.lineWidth = 5; octx.lineCap = 'round'; octx.lineJoin = 'round';
+    octx.beginPath(); t.pts.forEach((p,i) => i ? octx.lineTo(p.x,p.y) : octx.moveTo(p.x,p.y)); octx.stroke();
+  }
+  // defence ring on the die
+  const w = defWindow(now);
+  if (w && w.armed && d) {
+    const q = proj(d.x, d.y, d.z), r = Math.max(26, dieSize(q)*2.4);
+    const col = w.kind === 'kick' ? '232,176,74' : '127,210,155';
+    octx.strokeStyle = w.live ? `rgba(${col},.95)` : 'rgba(243,241,236,.28)';
+    octx.lineWidth = w.live ? 3 : 1.5;
+    octx.beginPath(); octx.arc(q.x, q.y, r, 0, 7); octx.stroke();
+    if (w.live) {
+      octx.font = '600 11px "IBM Plex Sans Condensed", sans-serif'; octx.textAlign = 'center'; octx.fillStyle = `rgba(${col},1)`;
+      octx.fillText(w.kind === 'kick' ? 'KICK' : 'CATCH', q.x, q.y - r - 6);
+    }
+  }
+  if (tapFx && now - tapFx.t < 420) {
+    const k = (now - tapFx.t) / 420;
+    octx.strokeStyle = tapFx.ok ? `rgba(127,210,155,${1-k})` : `rgba(217,54,44,${1-k})`;
+    octx.lineWidth = 2.5; octx.beginPath(); octx.arc(tapFx.x, tapFx.y, 8 + k*26, 0, 7); octx.stroke();
+  }
+}
+requestAnimationFrame(frame);
+$('loading').hidden = true;
+
+// ---------- screens ----------
+function showGame(){ $('lobby').hidden = true; $('hud').hidden = false; render(); }
+function showLobby(){
+  $('hud').hidden = true; $('lobby').hidden = false;
+  mode = null; G = null; spectator = false; mySide = 'A'; clearTimers();
+  aimKey = null; D = null; V = null; stage = 0; swipe = null; trail = null;
+}
+$('cpuBtn').addEventListener('click', () => {
+  mode = 'cpu'; mySide = 'A'; spectator = false;
+  G = newGame({A: nameOr(), B: 'CPU'}); showGame(); onState();
+});
+$('leaveBtn').addEventListener('click', () => {
+  const gr = gameRoom; gameRoom = null; guestPeer = null;
+  if (gr) gr.leave().catch(()=>{});
+  if (lobbyRoom && hostCode) lobbyRoom.presence({hosting:null, open:null}).catch(()=>{});
+  hostCode = null; showLobby();
+});
+
+// ---------- online ----------
+function code4(){ const a='ABCDEFGHJKMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<4;i++) s+=a[Math.floor(Math.random()*a.length)]; return s; }
+function waitingScreen(text){
+  $('nmMe').textContent = 'You'; $('scMe').textContent = '0';
+  $('nmOpp').textContent = 'Waiting'; $('scOpp').textContent = '0';
+  $('sideMe').classList.remove('turn'); $('sideOpp').classList.remove('turn');
+  setBanner('Code ' + hostCode, text || 'Your friend can join from Open games or by typing this code');
+  $('actBtn').hidden = true;
+  $('status').textContent = 'Waiting for an opponent…';
+}
+const OFFLINE_MSG = 'Live play can’t connect on this device. Open Beer Die from an invite sent to your email (Share → add your email), signed in to Claude. A public link won’t work. Practice vs CPU works anywhere.';
+let offline = false;
+function needRoom(){ if (room) return true; $('netNote').textContent = offline ? OFFLINE_MSG : 'Still connecting. Try again in a second.'; $('netNote').style.color = 'var(--gold)'; return false; }
+async function hostGame(){
+  if (!needRoom()) return;
+  hostCode = code4();
+  try { gameRoom = await room.join('bd-' + hostCode.toLowerCase()); }
+  catch(e){ $('netNote').textContent = 'Couldn’t open a game room right now. Try again in a moment.'; hostCode = null; return; }
+  mode = 'host'; mySide = 'A'; spectator = false; guestPeer = null; lastIntent = 0; G = null;
+  gameRoom.presence({role:'host', name: nameOr(), game:null}).catch(()=>{});
+  room.presence({hosting: hostCode, name: nameOr(), open: true}).catch(()=>{});
+  showGame(); waitingScreen();
+  gameRoom.onPeers(ch => {
+    const guests = ch.peers.filter(p => !p.sameTab && p.presence && p.presence.role === 'guest');
+    if (guestPeer && !guests.find(p => p.peer === guestPeer)) {
+      clearTimers(); guestPeer = null; G = null; D = null; V = null;
+      gameRoom.presence({game:null}).catch(()=>{});
+      room.presence({open:true}).catch(()=>{});
+      waitingScreen('Your opponent left. Waiting for someone new.');
+    }
+    if (!guestPeer && guests.length) {
+      const g = guests[0]; guestPeer = g.peer; lastIntent = 0;
+      G = newGame({A: nameOr(), B: String(g.presence.name||'Guest').slice(0,16)}, g.peer);
+      room.presence({open:false}).catch(()=>{});
+      commit();
+    }
+    const gp = guests.find(p => p.peer === guestPeer);
+    if (gp && G) {
+      const nm = String(gp.presence.name||'Guest').slice(0,16);
+      if (G.names.B !== nm) { G.names.B = nm; commit(); }
+      handleIntent(gp.presence.intent);
+    }
+  });
+}
+async function joinGame(code){
+  if (!needRoom()) return;
+  code = String(code||'').trim().toUpperCase();
+  if (!/^[A-Z]{4}$/.test(code)) { $('netNote').textContent = 'Game codes are 4 letters.'; return; }
+  try { gameRoom = await room.join('bd-' + code.toLowerCase()); }
+  catch(e){ $('netNote').textContent = 'Couldn’t join that game right now. Try again in a moment.'; return; }
+  mode = 'guest'; mySide = 'B'; spectator = false; G = null;
+  gameRoom.presence({role:'guest', name: nameOr(), intent:null}).catch(()=>{});
+  showGame();
+  setBanner('Joining ' + code, ''); $('status').textContent = 'Connecting…';
+  let sawHost = false;
+  setTimeout(() => { if (!sawHost && mode === 'guest') { setBanner('No game', 'Nobody is hosting ' + code + ' right now'); $('status').textContent = 'Tap Leave to go back.'; } }, 6000);
+  gameRoom.onPeers(ch => {
+    const me = ch.peers.find(p => p.sameTab); if (me) myPeer = me.peer;
+    const host = ch.peers.find(p => p.presence && p.presence.role === 'host');
+    if (!host) { if (sawHost) { G = null; D = null; clearTimers(); setBanner('Host left', 'This game is over'); $('status').textContent = ''; } return; }
+    sawHost = true;
+    const g = host.presence.game;
+    if (!g || typeof g !== 'object' || !g.score) { setBanner('Get ready', ''); $('status').textContent = 'Waiting for the host…'; return; }
+    spectator = !!(g.bPeer && myPeer && g.bPeer !== myPeer);
+    mySide = spectator ? 'A' : 'B';
+    G = JSON.parse(JSON.stringify(g));
+    onState();
+  });
+}
+$('hostBtn').addEventListener('click', hostGame);
+$('joinBtn').addEventListener('click', () => joinGame($('codeIn').value));
+$('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') joinGame($('codeIn').value); });
+
+function renderGames(peers){
+  const boxEl = $('games'); boxEl.innerHTML = '';
+  const list = peers.filter(p => !p.sameTab && p.presence && p.presence.hosting && p.presence.open);
+  if (!list.length) { const e = document.createElement('p'); e.className='empty'; e.textContent='No open games yet. Host one and it shows up here for your friends.'; boxEl.appendChild(e); return; }
+  list.forEach(p => {
+    const code = String(p.presence.hosting).slice(0,4);
+    const r = document.createElement('div'); r.className = 'game-row';
+    const w = document.createElement('span'); w.className = 'who'; w.textContent = String(p.presence.name||'Someone').slice(0,16) + '’s table';
+    const c = document.createElement('code'); c.textContent = code;
+    const b = document.createElement('button'); b.textContent = 'Join'; b.addEventListener('click', () => joinGame(code));
+    r.append(w, c, b); boxEl.appendChild(r);
+  });
+}
+// ---------- live play over a public MQTT relay (works phone to phone, any network) ----------
+const BROKER = (new URLSearchParams(location.search).get('broker')) || 'wss://broker.hivemq.com:8884/mqtt';
+const PREFIX = 'beerdie-mg26-v1';
+function mqttRooms(url, prefix){
+  const me = Math.random().toString(36).slice(2, 10);
+  const lobbyTopic = prefix + '/lobby/p/' + me;
+  const client = mqtt.connect(url, {clientId: 'bd_' + me, clean: true, keepalive: 30, reconnectPeriod: 2000, connectTimeout: 8000,
+    will: {topic: lobbyTopic, payload: '', retain: true, qos: 0}});
+  const rooms = {};
+  function makeRoom(name){
+    const base = prefix + '/' + name + '/p/';
+    const peers = new Map();                 // id -> {presence, seen}
+    const mine = {}; let listeners = [], left = false;
+    const list = () => { const now = Date.now(); const out = [];
+      for (const [id, v] of peers) if (id === me || now - v.seen < 15000) out.push({peer: id, sameTab: id === me, isMe: id === me, presence: v.presence});
+      return out; };
+    const emit = () => { const l = list(); listeners.forEach(f => { try { f({peers: l}); } catch(e){ console.error(e); } }); };
+    const pub = () => { if (left) return; peers.set(me, {presence: mine, seen: Date.now()});
+      if (client.connected) client.publish(base + me, JSON.stringify({presence: mine, ts: Date.now()}), {retain: true, qos: 0});
+      emit(); };
+    const onMsg = (topic, buf) => {
+      if (left || !topic.startsWith(base)) return;
+      const id = topic.slice(base.length); if (id === me) return;
+      if (!buf || !buf.length) { peers.delete(id); emit(); return; }
+      try { const v = JSON.parse(buf.toString());
+        if (!v || typeof v !== 'object' || typeof v.ts !== 'number') return;
+        if (Date.now() - v.ts > 60000) return;              // stale retained message from a closed page
+        peers.set(id, {presence: (v.presence && typeof v.presence === 'object') ? v.presence : {}, seen: Date.now()}); emit();
+      } catch(e){}
+    };
+    client.subscribe(base + '+'); client.on('message', onMsg);
+    client.on('connect', () => { client.subscribe(base + '+'); pub(); });
+    const hb = setInterval(pub, 4000);
+    const room = {
+      name,
+      presence(patch){ for (const k in patch) { if (patch[k] === null) delete mine[k]; else mine[k] = patch[k]; } pub(); return Promise.resolve(); },
+      onPeers(fn){ listeners.push(fn); setTimeout(emit, 0); return () => { listeners = listeners.filter(f => f !== fn); }; },
+      peers: list,
+      connected: () => client.connected,
+      leave(){ left = true; clearInterval(hb); if (client.connected) client.publish(base + me, '', {retain: true}); client.unsubscribe(base + '+'); client.removeListener('message', onMsg); delete rooms[name]; return Promise.resolve(); }
+    };
+    return room;
+  }
+  const lobby = makeRoom('lobby');
+  addEventListener('pagehide', () => { try { Object.values(rooms).forEach(r => r.leave()); lobby.leave(); } catch(e){} });
+  return {presence: lobby.presence, onPeers: lobby.onPeers, peers: lobby.peers,
+          join: async n => rooms[n] || (rooms[n] = makeRoom(n)), client};
+}
+(() => {
+  if (!window.mqtt) { offline = true; $('games').innerHTML = ''; $('netNote').textContent = 'Couldn’t load live play. Check your connection and reload. Practice vs CPU still works.'; return; }
+  const r = mqttRooms(BROKER, PREFIX);
+  room = r; lobbyRoom = r;
+  r.onPeers(ch => renderGames(ch.peers));
+  const note = $('netNote');
+  note.textContent = 'Connecting to live play…';
+  r.client.on('connect', () => { note.textContent = ''; note.style.color = ''; });
+  r.client.on('offline', () => { note.textContent = 'Live play is offline. Reconnecting…'; });
+  setTimeout(() => { if (!r.client.connected) note.textContent = 'Can’t reach the game server on this network. Try switching Wi‑Fi or cellular.'; }, 9000);
+})();
+})();
+</script>
+
+</body>
+</html>
