@@ -45,6 +45,11 @@ input::placeholder{color:#7d8280}
 .btn-sec:hover{border-color:rgba(255,255,255,.35)}
 .btn-main:disabled,.btn-sec:disabled{opacity:.4;cursor:default}
 .games{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.opts{display:flex;flex-wrap:wrap;gap:10px 18px}
+.seg{display:flex;align-items:center;gap:6px}
+.seg .lbl{margin-right:4px}
+.seg button{background:transparent;color:var(--muted);border:1px solid var(--line);padding:8px 12px;font-size:13px;letter-spacing:.06em}
+.seg button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#1a1206}
 .game-row{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:10px 0}
 .game-row .who{flex:1;min-width:0;font:500 16px var(--ui);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .game-row code{font:700 16px var(--display);color:var(--gold);letter-spacing:.14em}
@@ -107,6 +112,10 @@ input::placeholder{color:#7d8280}
 
     <div class="grp">
       <p class="lbl">Play</p>
+      <div class="opts">
+        <div class="seg" id="targetSeg"><span class="lbl">Game to</span><button type="button" data-v="7">7</button><button type="button" data-v="11">11</button></div>
+        <div class="seg" id="diffSeg"><span class="lbl">CPU</span><button type="button" data-v="easy">Easy</button><button type="button" data-v="medium">Medium</button><button type="button" data-v="hard">Hard</button></div>
+      </div>
       <div class="row">
         <button class="btn-main" id="hostBtn">Host a game</button>
         <button class="btn-sec" id="cpuBtn">Practice vs CPU</button>
@@ -131,7 +140,7 @@ input::placeholder{color:#7d8280}
         <dt>Catch</dt><dd>Tap the die while its ring is green.</dd>
         <dt>FIFA</dt><dd>Only when the die goes off the table untouched, including a throw that goes long or wide on your half: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
         <dt>Plink</dt><dd>Off the side of a cup: +2 if they drop it, nothing if they catch it. It comes off fast, so it’s much harder to catch.</dd>
-        <dt>Plop</dt><dd>In the cup: +3. First to 7 wins.</dd>
+        <dt>Plop</dt><dd>In the cup: +3. First to 7 or 11 wins, you pick.</dd>
         <dt>Power-ups</dt><dd>Earn one for every Plop (hold up to 2). Aim Guide and Double Down are used on your throw. Sticky Hands and Shaky Hands can be used any time and hit their next throw.</dd>
       </dl>
     </div>
@@ -198,9 +207,10 @@ const PU = {
   shaky:  {name:'Shaky Hands',  when:'defend', desc:'Their next throw wobbles'},
 };
 const PU_KEYS = Object.keys(PU);
-function newGame(names, bPeer){
+function newGame(names, bPeer, target){
+  target = target === 11 ? 11 : 7;
   return {id: Math.floor(Math.random()*9e6)*100, phase:'aim', thrower: Math.random()<.5?'A':'B', score:{A:0,B:0},
-          target:TARGET, shot:null, msg:'', sub:'', tone:'', names, bPeer: bPeer||null, winner:null,
+          target, shot:null, msg:'', sub:'', tone:'', names, bPeer: bPeer||null, winner:null,
           pu:{A:[], B:[]}, armed:{A:{}, B:{}}, feed:null};
 }
 function feed(side, text){ G.feed = {n: (G.feed ? G.feed.n : 0) + 1, side, text}; }
@@ -320,30 +330,47 @@ function nextTurn(id){
   G.thrower = other(G.thrower); G.phase = 'aim'; G.msg = ''; G.sub = '';
   commit();
 }
-function rematch(){ if (!G) return; clearTimers(); G = newGame(G.names, G.bPeer); commit(); }
+function rematch(){ if (!G) return; clearTimers(); G = newGame(G.names, G.bPeer, G.target); commit(); }
 
 // ---------- CPU ----------
+// how good the CPU is: throw scatter, how often it goes for cups, catch skill, FIFA skill, power-up use, thinking time
+const CPU_LEVELS = {
+  easy:   {label:'Easy CPU',   aimN:0.28, powN:0.20, cup:0.15, catchK:1.0, catchMax:0.4,  fifa:0.03, pu:0.3, think:[2200, 1200]},
+  medium: {label:'CPU',        aimN:0.16, powN:0.12, cup:0.35, catchK:1.8, catchMax:0.7,  fifa:0.10, pu:0.6, think:[1500, 900]},
+  hard:   {label:'Hard CPU',   aimN:0.07, powN:0.055, cup:0.55, catchK:2.7, catchMax:0.9, fifa:0.25, pu:0.95, think:[1100, 600]},
+};
+let cpuLevel = 'medium', gameTo = 7;
+try { const v = localStorage.getItem('bd-cpu'); if (CPU_LEVELS[v]) cpuLevel = v; const t = +localStorage.getItem('bd-to'); if (t === 11) gameTo = 11; } catch(e){}
+function setupSeg(id, get, set){
+  const el = $(id), paint = () => el.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(get()))));
+  el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); paint(); });
+  paint();
+}
+setupSeg('targetSeg', () => gameTo, v => { gameTo = +v === 11 ? 11 : 7; try { localStorage.setItem('bd-to', gameTo); } catch(e){} });
+setupSeg('diffSeg', () => cpuLevel, v => { if (CPU_LEVELS[v]) cpuLevel = v; try { localStorage.setItem('bd-cpu', cpuLevel); } catch(e){} });
+
 function cpuTick(){
   if (mode !== 'cpu' || !G) return;
+  const L = CPU_LEVELS[cpuLevel];
   if (G.phase === 'aim') {
     const k = G.pu.B.find(k => canUse('B', k));
-    if (k && Math.random() < 0.6) { const key = G.id; later(() => { if (G && G.phase === 'aim' && G.id === key) usePU('B', k); }, 500 + Math.random()*500); }
+    if (k && Math.random() < L.pu) { const key = G.id; later(() => { if (G && G.phase === 'aim' && G.id === key) usePU('B', k); }, 500 + Math.random()*500); }
   }
   if (G.phase === 'aim' && G.thrower === 'B') {
     const key = G.id;
     later(() => {
       if (!G || G.phase !== 'aim' || G.id !== key) return;
-      const goCup = Math.random() < 0.35, c = Math.random()<.5 ? -0.8 : 0.8;
+      const goCup = Math.random() < L.cup, c = Math.random()<.5 ? -0.8 : 0.8;
       const aimT = goCup ? c/1.18 : (Math.random()*1.1-0.55);
       const powT = goCup ? (0.92-0.3)/0.85 : 0.55 + Math.random()*0.25;
       const n = () => (Math.random()+Math.random()+Math.random()-1.5);
-      doThrow('B', aimT + n()*0.16, powT + n()*0.12);
-    }, 1500 + Math.random()*900);
+      doThrow('B', aimT + n()*L.aimN, powT + n()*L.powN);
+    }, L.think[0] + Math.random()*L.think[1]);
   }
   if (G.phase === 'catch' && G.thrower === 'A') {
-    const id = G.shot.id, p = G.shot.fifaOnly ? 0 : Math.min(0.7, G.shot.zone * 1.8), r = Math.random();
+    const id = G.shot.id, p = G.shot.fifaOnly ? 0 : Math.min(L.catchMax, G.shot.zone * L.catchK), r = Math.random();
     if (r < p) later(() => doCatch('B', 'caught', id), CATCH_MS*(G.shot.zpos + G.shot.zone*0.5));
-    else if (r < p + 0.1) later(() => doCatch('B', 'fifa', id), CATCH_MS + FALL_MS*0.8 + KICK_MS*0.6);
+    else if (r < p + L.fifa) later(() => doCatch('B', 'fifa', id), CATCH_MS + FALL_MS*0.8 + KICK_MS*0.6);
     else later(() => doCatch('B', 'drop', id), CATCH_MS + FALL_MS*1.3);
   }
 }
@@ -699,7 +726,7 @@ function drawBoard(g, w, h){
   g.fillStyle='rgba(240,238,228,.9)'; g.textAlign='left';
   g.font='600 64px Caveat, cursive'; g.fillText('House Rules', 44, 96);
   g.font='600 42px Caveat, cursive';
-  ['Drop ........ 1','Plink ....... 2','Plop ......... 3','FIFA ......... 1','Game to 7','No re-throws'].forEach((t,i)=> g.fillText(t, 52, 170 + i*56));
+  ['Drop ........ 1','Plink ....... 2','Plop ......... 3','FIFA ......... 1','Game to 7 or 11','No re-throws'].forEach((t,i)=> g.fillText(t, 52, 170 + i*56));
 }
 boardTex = canvasTex(512, 520, drawBoard);
 if (document.fonts && document.fonts.load) document.fonts.load('600 40px Caveat').then(() => { const c = boardTex.image; drawBoard(c.getContext('2d'), c.width, c.height); boardTex.needsUpdate = true; }).catch(()=>{});
@@ -948,7 +975,7 @@ function showLobby(){
 }
 $('cpuBtn').addEventListener('click', () => {
   mode = 'cpu'; mySide = 'A'; spectator = false;
-  G = newGame({A: nameOr(), B: 'CPU'}); showGame(); onState();
+  G = newGame({A: nameOr(), B: CPU_LEVELS[cpuLevel].label}, null, gameTo); showGame(); onState();
 });
 $('leaveBtn').addEventListener('click', () => {
   const gr = gameRoom; gameRoom = null; guestPeer = null;
@@ -989,7 +1016,7 @@ async function hostGame(){
     }
     if (!guestPeer && guests.length) {
       const g = guests[0]; guestPeer = g.peer; lastIntent = 0;
-      G = newGame({A: nameOr(), B: String(g.presence.name||'Guest').slice(0,16)}, g.peer);
+      G = newGame({A: nameOr(), B: String(g.presence.name||'Guest').slice(0,16)}, g.peer, gameTo);
       room.presence({open:false}).catch(()=>{});
       commit();
     }
