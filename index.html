@@ -177,6 +177,10 @@ input::placeholder{color:#7d8280}
         <div class="arenas" id="arenas"></div>
       </div>
       <div class="card">
+        <div class="card-h"><h2>Table</h2><p class="hint">Online games use the host’s table</p></div>
+        <div class="arenas" id="tables"></div>
+      </div>
+      <div class="card">
         <div class="card-h"><h2>Play friends</h2><p class="hint">Host a table or join one</p></div>
         <div class="opts">
           <div class="seg" id="fmtSeg"><span class="lbl">Mode</span><button type="button" data-v="1v1">1v1</button><button type="button" data-v="2v2">2v2</button></div>
@@ -308,7 +312,7 @@ function newGame(seats, target, fmt){
   return {id: Math.floor(Math.random()*9e6)*100, phase:'aim', thrower, throwerId: seats[thrower][0].id,
           tIdx: {A: thrower === 'A' ? 1 : 0, B: thrower === 'B' ? 1 : 0}, drops: [],
           score:{A:0,B:0}, target, fmt: fmt === '2v2' ? '2v2' : '1v1', seats, shot:null, msg:'', sub:'', tone:'', names, winner:null,
-          pu:{A:[], B:[]}, armed:{A:{}, B:{}}, feed:null, arena: arenaKey, redemption:null};
+          pu:{A:[], B:[]}, armed:{A:{}, B:{}}, feed:null, arena: arenaKey, table: tableKey, redemption:null};
 }
 let myId = 'me';                     // this phone's seat id: 'me' vs the CPU, 'host' when hosting, the room peer id when joining
 function teamOf(id){ if (!G || !G.seats) return null; for (const t of ['A','B']) if (G.seats[t].some(p => p.id === id)) return t; return null; }
@@ -546,6 +550,7 @@ function onState(){
   }
   if (G.phase === 'result' && s && V && V.id === s.id && V.stop == null) V.stop = (now - V.t0) / CATCH_MS;
   if (G.arena && G.arena !== currentArena) applyArena(G.arena);
+  if (G.table && G.table !== currentTable) applyTable(G.table);
   if (G.phase === 'over') awardXP();
   cpuTick();
   render();
@@ -977,6 +982,11 @@ let currentArena = null, crowd = null, cheerUntil = 0;
 const DENSITY = MOBILE ? 0.6 : 1;
 const shirts = [0xd9362c,0x2f6fd6,0xf0f0ea,0x1d1d1f,0xe8b04a,0x2e9d5b,0x7a3fb8,0xff7a1a,0x13305c,0x9c9c9c];
 const skins = [0xf1c9a5,0xd9a47a,0xa8714b,0x7a4e2d,0x5a3920,0xe0b08a];
+const capCols = [0x13305c,0xd9362c,0x1d1d1f,0xf0f0ea,0x2e9d5b,0xe8b04a,0x7a3fb8];
+const capGeo = new THREE.SphereGeometry(0.285, 10, 6, 0, Math.PI*2, 0, Math.PI*0.52);
+const brimGeo = new THREE.BoxGeometry(0.26, 0.035, 0.24);
+const handGeo = new THREE.SphereGeometry(0.085, 8, 6);
+const fanCupGeo = new THREE.CylinderGeometry(0.11, 0.08, 0.3, 10); fanCupGeo.translate(0, 0.15, 0);
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _v = new THREE.Vector3(), _s = new THREE.Vector3(), _e = new THREE.Euler();
 function makeCrowd(spots, seated, parent){
   spots = spots.filter(() => Math.random() < DENSITY);
@@ -985,11 +995,19 @@ function makeCrowd(spots, seated, parent){
   const headGeo = new THREE.SphereGeometry(0.26, 10, 8);
   const body = new THREE.InstancedMesh(bodyGeo, new THREE.MeshStandardMaterial({roughness: 0.85}), n);
   const head = new THREE.InstancedMesh(headGeo, new THREE.MeshStandardMaterial({roughness: 0.7}), n);
+  // backwards caps (crown + brim behind the head) and a red solo cup in one hand
+  const cap = new THREE.InstancedMesh(capGeo, new THREE.MeshStandardMaterial({roughness: 0.7}), n);
+  const brim = new THREE.InstancedMesh(brimGeo, new THREE.MeshStandardMaterial({roughness: 0.7}), n);
+  const hand = new THREE.InstancedMesh(handGeo, new THREE.MeshStandardMaterial({roughness: 0.7}), n);
+  const cup = new THREE.InstancedMesh(fanCupGeo, new THREE.MeshStandardMaterial({color: 0xc4231a, roughness: 0.35}), n);
   const c = new THREE.Color();
-  spots.forEach((p, i) => { c.setHex(shirts[(i*7 + (i>>3)) % shirts.length]); body.setColorAt(i, c); c.setHex(skins[(i*5 + 3) % skins.length]); head.setColorAt(i, c);
-    p.ph = Math.random()*6.28; p.s = 0.88 + Math.random()*0.22; p.ry = Math.atan2(-p.x, -p.z) + Math.PI; });
-  parent.add(body, head);
-  const cr = {body, head, spots, h};
+  spots.forEach((p, i) => { c.setHex(shirts[(i*7 + (i>>3)) % shirts.length]); body.setColorAt(i, c);
+    c.setHex(skins[(i*5 + 3) % skins.length]); head.setColorAt(i, c); hand.setColorAt(i, c);
+    c.setHex(capCols[(i*3 + 1) % capCols.length]); cap.setColorAt(i, c); brim.setColorAt(i, c);
+    p.ph = Math.random()*6.28; p.s = 0.88 + Math.random()*0.22;
+    const L = Math.hypot(p.x, p.z) || 1; p.fx = -p.x / L; p.fz = -p.z / L; p.ry = Math.atan2(p.fx, p.fz); p.side = Math.random() < 0.5 ? 1 : -1; });
+  parent.add(body, head, cap, brim, hand, cup);
+  const cr = {body, head, cap, brim, hand, cup, spots, h};
   poseCrowd(cr, 0, 0);
   return cr;
 }
@@ -998,9 +1016,17 @@ function poseCrowd(cr, now, cheer){
     const jump = cheer ? Math.max(0, Math.sin(now*0.013 + p.ph)) * 0.5 * cheer : 0;
     _q.setFromEuler(_e.set(0, p.ry, 0)); _s.set(p.s, p.s, p.s);
     _v.set(p.x, p.y + jump, p.z); _m.compose(_v, _q, _s); cr.body.setMatrixAt(i, _m);
-    _v.set(p.x, p.y + jump + (cr.h + 0.22)*p.s, p.z); _m.compose(_v, _q, _s); cr.head.setMatrixAt(i, _m);
+    const hy = p.y + jump + (cr.h + 0.22)*p.s;
+    _v.set(p.x, hy, p.z); _m.compose(_v, _q, _s); cr.head.setMatrixAt(i, _m);
+    _v.set(p.x, hy + 0.03*p.s, p.z); _m.compose(_v, _q, _s); cr.cap.setMatrixAt(i, _m);
+    _v.set(p.x - p.fx*0.27*p.s, hy + 0.05*p.s, p.z - p.fz*0.27*p.s); _m.compose(_v, _q, _s); cr.brim.setMatrixAt(i, _m);   // brim points backwards
+    const raise = cheer ? (0.55 + 0.35*Math.max(0, Math.sin(now*0.011 + p.ph*1.7))) * cheer : 0;
+    const rx = p.fz * p.side, rz = -p.fx * p.side;          // the hand holding the cup, out to one side
+    const cy = p.y + jump + (cr.h*0.52 + raise*1.6)*p.s;
+    _v.set(p.x + rx*0.44*p.s + p.fx*0.12*p.s, cy, p.z + rz*0.44*p.s + p.fz*0.12*p.s); _m.compose(_v, _q, _s); cr.hand.setMatrixAt(i, _m);
+    _v.y = cy - 0.04*p.s; _m.compose(_v, _q, _s); cr.cup.setMatrixAt(i, _m);
   });
-  cr.body.instanceMatrix.needsUpdate = true; cr.head.instanceMatrix.needsUpdate = true;
+  ['body','head','cap','brim','hand','cup'].forEach(k => { cr[k].instanceMatrix.needsUpdate = true; });
 }
 function stars(parent, n){
   const pos = []; for (let i=0;i<n;i++){ const a = Math.random()*Math.PI*2, e = 0.12 + Math.random()*0.9, r = 90; pos.push(Math.cos(a)*Math.cos(e)*r, Math.sin(e)*r, Math.sin(a)*Math.cos(e)*r - 20); }
@@ -1106,6 +1132,105 @@ function buildArena(key){
   if (cfg.spots) cfg.crowd = makeCrowd(cfg.spots, cfg.seated, grp);
   arenaCfg[key] = cfg; return cfg;
 }
+
+// ---------- painted table designs ----------
+const TABLES = [
+  {key:'arena',   name:'Arena pick',  desc:'Whatever the arena uses'},
+  {key:'plywood', name:'Plywood',     desc:'Classic basement top'},
+  {key:'kegs',    name:'Keg Stand',   desc:'Painted kegs on dark wood'},
+  {key:'ud',      name:'U of Dallas', desc:'Navy and white, UD pride'},
+  {key:'frat',    name:'Frat Row',    desc:'The boys, painted on'},
+];
+const tableMats = {};
+// each design is painted once per half so it reads right side up from both ends
+function halves(g, w, h, draw){ g.save(); g.translate(0, h/2); draw(g, w, h/2); g.restore(); g.save(); g.translate(w, h/2); g.rotate(Math.PI); draw(g, w, h/2); g.restore(); }
+function woodBase(g, w, h, c1, c2){
+  g.fillStyle = c1; g.fillRect(0,0,w,h);
+  for (let i=0;i<260;i++){ let x = rnd(0,w); g.strokeStyle = c2; g.globalAlpha = rnd(.05,.18); g.lineWidth = rnd(.5,1.8); g.beginPath(); g.moveTo(x,0); for (let y=0;y<=h;y+=24){ x += rnd(-1.5,1.5); g.lineTo(x,y); } g.stroke(); }
+  g.globalAlpha = 1;
+}
+function keg(g, x, y, s, rot){
+  g.save(); g.translate(x, y); g.rotate(rot); g.scale(s, s);
+  const gr = g.createLinearGradient(-40, 0, 40, 0); gr.addColorStop(0,'#6d747c'); gr.addColorStop(.35,'#e9edf1'); gr.addColorStop(.6,'#b7bec6'); gr.addColorStop(1,'#5d646b');
+  g.fillStyle = gr; g.beginPath(); g.moveTo(-38,-52); g.quadraticCurveTo(-46,0,-38,52); g.lineTo(38,52); g.quadraticCurveTo(46,0,38,-52); g.closePath(); g.fill();
+  g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(-44,-20,88,6); g.fillRect(-44,16,88,6);
+  g.fillStyle = '#c9d0d6'; g.beginPath(); g.ellipse(0,-52,38,9,0,0,7); g.fill(); g.fillStyle = '#8b939b'; g.beginPath(); g.ellipse(0,-52,24,5,0,0,7); g.fill();
+  g.fillStyle = '#222'; g.fillRect(-7,-68,14,14); g.fillRect(-2,-74,26,7);
+  g.strokeStyle = '#111'; g.lineWidth = 3; g.beginPath(); g.moveTo(-38,-52); g.quadraticCurveTo(-46,0,-38,52); g.lineTo(38,52); g.quadraticCurveTo(46,0,38,-52); g.closePath(); g.stroke();
+  g.restore();
+}
+function fratGuy(g, x, y, s, shirt, cap, skin, flip){
+  g.save(); g.translate(x, y); g.scale(flip ? -s : s, s);
+  g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = '#141414'; g.lineWidth = 4;
+  g.fillStyle = '#3a4e7a'; g.fillRect(-26, 48, 22, 60); g.fillRect(4, 48, 22, 60); g.strokeRect(-26,48,22,60); g.strokeRect(4,48,22,60);
+  g.fillStyle = shirt; g.beginPath(); g.moveTo(-30,-10); g.lineTo(30,-10); g.lineTo(28,52); g.lineTo(-28,52); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = skin; g.beginPath(); g.moveTo(-30,-6); g.lineTo(-52,-44); g.lineTo(-42,-50); g.lineTo(-22,-14); g.closePath(); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(30,-6); g.lineTo(46,34); g.lineTo(36,38); g.lineTo(22,4); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#d9362c'; g.beginPath(); g.moveTo(-58,-78); g.lineTo(-36,-78); g.lineTo(-40,-48); g.lineTo(-54,-48); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#fff'; g.fillRect(-58,-80,22,5);
+  g.fillStyle = skin; g.beginPath(); g.arc(0,-34,24,0,7); g.fill(); g.stroke();
+  g.fillStyle = cap; g.beginPath(); g.arc(0,-40,24,Math.PI,0); g.closePath(); g.fill(); g.stroke();
+  g.fillRect(14,-44,18,7); g.strokeRect(14,-44,18,7);
+  g.fillStyle = '#111'; g.fillRect(-18,-38,15,8); g.fillRect(3,-38,15,8); g.fillRect(-4,-36,8,3);
+  g.beginPath(); g.arc(0,-22,8,0.15*Math.PI,0.85*Math.PI); g.stroke();
+  g.restore();
+}
+function tableMat(key){
+  if (tableMats[key]) return tableMats[key];
+  let map;
+  if (key === 'plywood') { tableMats[key] = M.wood; return M.wood; }
+  if (key === 'kegs') map = canvasTex(512, 1024, (g, w, h) => {
+    woodBase(g, w, h, '#4a2f18', '#1e1208');
+    halves(g, w, h, (g, w, hh) => {
+      g.fillStyle = 'rgba(232,176,74,.9)'; g.font = '900 54px "Big Shoulders Display", sans-serif'; g.textAlign = 'center'; g.fillText('KEG STAND', w/2, hh*0.62);
+      keg(g, w*0.22, hh*0.3, 1.35, -0.25); keg(g, w*0.78, hh*0.28, 1.35, 0.3); keg(g, w*0.5, hh*0.84, 1.0, 0.05);
+      g.strokeStyle = 'rgba(232,176,74,.8)'; g.lineWidth = 8; g.strokeRect(14, 10, w-28, hh-20);
+    });
+  });
+  if (key === 'ud') map = canvasTex(512, 1024, (g, w, h) => {
+    g.fillStyle = '#001A4B'; g.fillRect(0,0,w,h);
+    for (let i=0;i<2500;i++){ g.fillStyle = `rgba(255,255,255,${rnd(0,.03)})`; g.fillRect(rnd(0,w), rnd(0,h), 2, rnd(2,8)); }
+    g.strokeStyle = '#fff'; g.lineWidth = 12; g.strokeRect(16, 16, w-32, h-32); g.lineWidth = 3; g.strokeRect(34, 34, w-68, h-68);
+    halves(g, w, h, (g, w, hh) => {
+      g.fillStyle = '#fff'; g.textAlign = 'center';
+      g.beginPath(); g.arc(w/2, hh*0.34, 78, 0, 7); g.lineWidth = 6; g.strokeStyle = '#fff'; g.stroke();
+      g.font = '900 88px "Big Shoulders Display", sans-serif'; g.fillText('UD', w/2, hh*0.34 + 30);
+      g.font = '800 58px "Big Shoulders Display", sans-serif'; g.fillText('UNIVERSITY', w/2, hh*0.66);
+      g.fillText('OF DALLAS', w/2, hh*0.66 + 54);
+      g.font = '600 22px "IBM Plex Sans Condensed", sans-serif'; g.fillText('C R U S A D E R S', w/2, hh*0.66 + 92);
+    });
+  });
+  if (key === 'frat') map = canvasTex(512, 1024, (g, w, h) => {
+    const gr = g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'#ff7a45'); gr.addColorStop(.5,'#f2c14e'); gr.addColorStop(1,'#ff7a45'); g.fillStyle = gr; g.fillRect(0,0,w,h);
+    halves(g, w, h, (g, w, hh) => {
+      g.fillStyle = 'rgba(255,255,255,.35)'; for (let i=0;i<9;i++){ g.save(); g.translate(w/2, hh); g.rotate(-Math.PI/2 + (i-4)*0.3); g.fillRect(-10, 0, 20, -hh*1.1); g.restore(); }
+      fratGuy(g, w*0.2, hh*0.5, 1.05, '#2f6fd6', '#d9362c', '#f1c9a5', false);
+      fratGuy(g, w*0.5, hh*0.44, 1.15, '#f0f0ea', '#13305c', '#a8714b', true);
+      fratGuy(g, w*0.8, hh*0.5, 1.05, '#2e9d5b', '#1d1d1f', '#d9a47a', true);
+      g.fillStyle = '#141414'; g.font = '900 64px "Big Shoulders Display", sans-serif'; g.textAlign = 'center'; g.fillText('FRAT ROW', w/2, hh*0.9);
+    });
+    g.strokeStyle = '#141414'; g.lineWidth = 10; g.strokeRect(10, 10, w-20, h-20);
+  });
+  tableMats[key] = new THREE.MeshStandardMaterial({map, roughness: 0.45});
+  return tableMats[key];
+}
+let currentTable = null, tableKey = 'arena';
+try { const t = localStorage.getItem('bd-table'); if (TABLES.some(x => x.key === t)) tableKey = t; } catch(e){}
+function applyTable(key){
+  if (!TABLES.some(t => t.key === key)) key = 'arena';
+  currentTable = key;
+  tableTop.material = key === 'arena' ? (arenaCfg[currentArena] || buildArena('basement')).top : tableMat(key);
+  renderer.shadowMap.needsUpdate = true; sceneDirty = 3;
+}
+function renderTables(){
+  const box = $('tables'); box.innerHTML = '';
+  TABLES.forEach(t => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'arena' + (t.key === tableKey ? ' on' : ''); b.setAttribute('aria-pressed', String(t.key === tableKey));
+    const n = document.createElement('b'); n.textContent = t.name; const d = document.createElement('span'); d.textContent = t.desc;
+    b.append(n, d); b.addEventListener('click', () => { tableKey = t.key; try { localStorage.setItem('bd-table', tableKey); } catch(e){} applyTable(tableKey); renderTables(); });
+    box.appendChild(b);
+  });
+}
 function applyArena(key){
   if (!ARENAS.some(a => a.key === key)) key = 'basement';
   if (currentArena === key) return;
@@ -1119,7 +1244,7 @@ function applyArena(key){
   scene.background.setHex(c.bg); scene.fog.color.setHex(c.bg); scene.fog.near = c.fog[0]; scene.fog.far = c.fog[1];
   lamp.color.setHex(c.lamp[0]); lamp.intensity = c.lamp[1]; lamp.angle = c.lamp[2];
   hemi.color.setHex(c.hemi[0]); hemi.groundColor.setHex(c.hemi[1]); hemi.intensity = c.hemi[2];
-  tableTop.material = c.top;
+  tableTop.material = currentTable && currentTable !== 'arena' ? tableMat(currentTable) : c.top;
   crowd = c.crowd || null;
   renderer.shadowMap.needsUpdate = true; sceneDirty = 3;
 }
@@ -1306,7 +1431,7 @@ function drawOverlay(now, d){
     octx.lineWidth = 2.5; octx.beginPath(); octx.arc(tapFx.x, tapFx.y, 8 + k*26, 0, 7); octx.stroke();
   }
 }
-applyArena(arenaKey); renderLevel();
+applyArena(arenaKey); applyTable(tableKey); renderLevel(); renderTables();
 requestAnimationFrame(frame);
 $('loading').hidden = true;
 
@@ -1314,7 +1439,7 @@ $('loading').hidden = true;
 function showGame(){ $('lobby').hidden = true; $('hud').hidden = false; render(); }
 function showLobby(){
   $('hud').hidden = true; $('lobby').hidden = false;
-  mode = null; G = null; spectator = false; mySide = 'A'; myId = 'me'; clearTimers(); setStatus('menu'); applyArena(arenaKey); $('shade').classList.remove('shaken');
+  mode = null; G = null; spectator = false; mySide = 'A'; myId = 'me'; clearTimers(); setStatus('menu'); applyArena(arenaKey); applyTable(tableKey); $('shade').classList.remove('shaken');
   aimKey = null; D = null; V = null; stage = 0; swipe = null; trail = null;
 }
 $('cpuBtn').addEventListener('click', () => {
