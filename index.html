@@ -613,7 +613,7 @@ function handleIntent(it, from){
 let aimKey = null, stage = 0, sent = false;
 let D = null;   // my defence as it happens: {id, stage:'catch'|'fall'|'kick'|'held'|'dropped', t0, from, at, usedCatch, sent}
 let V = null;   // what everyone else sees of the catch: {id, t0, stop}
-let swipe = null, trail = null, tapFx = null, ownerPlop = false;
+let swipe = null, trail = null, tapFx = null, ownerPlop = false, cornerTap = 0;
 
 function amDefender(){ return G && !spectator && G.thrower !== mySide; }
 
@@ -718,7 +718,7 @@ function myThrowReady(){ return G && G.phase === 'aim' && G.thrower === mySide &
 
 function releaseSwipe(){
   const pts = swipe.pts; swipe = null;
-  if (ownerPlop) {   // owner only: two-finger swipe drops it dead-center in one of their cups
+  if (ownerPlop) {   // owner only: drops it dead-center in one of their cups
     const c = CUPS.filter(k => k[1] >= 0.5)[Math.random() < 0.5 ? 0 : 1];
     const aim = (c[0] + (Math.random()-0.5)*0.02) / 1.18, power = (c[1] - 0.3 + (Math.random()-0.5)*0.004) / 0.85;
     ownerPlop = false; trail = {pts, t: performance.now()}; sent = true; stage = 3;
@@ -769,7 +769,10 @@ ov.addEventListener('pointerdown', e => {
   e.preventDefault();
   if (!G || spectator || $('hud').hidden) return;
   const p = localPt(e), now = performance.now();
-  if (swipe && ownerMode) { ownerPlop = true; return; }   // a second finger during the swipe
+  if (ownerMode && myThrowReady() && p.x < 80 && p.y > H - 170) {   // owner only: double-tap the bottom-left corner
+    if (now - cornerTap < 400) { cornerTap = 0; ownerPlop = true; swipe = {pts:[p]}; releaseSwipe(); } else cornerTap = now;
+    return;
+  }
   if (myThrowReady()) { ownerPlop = false; swipe = {pts:[p]}; try { ov.setPointerCapture(e.pointerId); } catch(_){} return; }
   const w = defWindow(now);
   if (!w || !w.armed) return;
