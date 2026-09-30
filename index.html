@@ -32,36 +32,73 @@ input{font:500 17px var(--ui);background:rgba(255,255,255,.06);color:var(--text)
 input::placeholder{color:#7d8280}
 
 /* lobby */
-.lobby{position:fixed;inset:0;overflow:auto;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 20px) 28px;box-sizing:border-box;background:linear-gradient(90deg, rgba(8,9,10,.92) 0%, rgba(8,9,10,.78) 38%, rgba(8,9,10,.15) 70%, transparent)}
-.lobby-in{max-width:400px;display:flex;flex-direction:column;gap:22px}
-@media (min-width:900px){.lobby{padding-inline:56px;padding-block:56px}}
-.eyebrow{font:600 12px var(--ui);letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:0}
-.brand{font:900 clamp(64px,16vw,112px)/.82 var(--display);text-transform:uppercase;margin:6px 0 0;letter-spacing:-.01em}
-.tag{font-size:16px;color:var(--muted);margin:10px 0 0;line-height:1.45;max-width:34ch}
-.grp{display:flex;flex-direction:column;gap:10px}
+.lobby{position:fixed;inset:0;overflow:auto;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 18px) 28px;box-sizing:border-box;background:linear-gradient(90deg, rgba(8,9,10,.94) 0%, rgba(8,9,10,.82) 45%, rgba(8,9,10,.25) 80%, rgba(8,9,10,.1))}
+.lobby-in{max-width:440px;display:flex;flex-direction:column;gap:14px}
+@media (min-width:900px){.lobby{padding-inline:56px;padding-block:48px}}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.brand{font:900 clamp(46px,13vw,72px)/.85 var(--display);text-transform:uppercase;margin:0;letter-spacing:-.005em;white-space:nowrap}
+.brand span{color:var(--gold)}
+.me{flex:1 1 150px;min-width:0;display:flex;flex-direction:column;gap:6px}
+.me input{padding:9px 11px;font-size:16px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line)}
+.tab{background:none;color:var(--muted);padding:10px 12px 9px;font-size:13px;border-radius:0;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px}
+.tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--gold)}
+.badge{min-width:18px;padding:1px 6px;border-radius:9px;background:var(--good);color:#0b1a10;font:700 11px var(--ui);letter-spacing:0;text-align:center}
+.pane{display:flex;flex-direction:column;gap:12px}
+.card{background:rgba(18,21,23,.78);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:12px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card h2{font:800 20px var(--display);letter-spacing:.05em;text-transform:uppercase;margin:0}
+.hint{font-size:12px;color:var(--muted);margin:0}
 .lbl{font:600 11px var(--ui);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.row > *{flex:1 1 140px}
-.btn-main{background:var(--text);color:var(--ink);padding:14px 16px;font-size:15px}
+.row{display:flex;gap:8px}
+.row > input{flex:1 1 auto;min-width:0}
+.row > button{flex:0 0 auto}
+.btn-main{background:var(--text);color:var(--ink);padding:13px 16px;font-size:15px}
 .btn-main:hover{background:#fff}
-.btn-sec{background:transparent;color:var(--text);border:1px solid var(--line);padding:13px 14px;font-size:14px}
+.btn-sec{background:transparent;color:var(--text);border:1px solid var(--line);padding:12px 16px;font-size:14px}
 .btn-sec:hover{border-color:rgba(255,255,255,.35)}
 .btn-main:disabled,.btn-sec:disabled{opacity:.4;cursor:default}
-.games{display:flex;flex-direction:column;border-top:1px solid var(--line)}
 .opts{display:flex;flex-wrap:wrap;gap:10px 18px}
-.seg{display:flex;align-items:center;gap:6px}
+.seg{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .seg .lbl{margin-right:4px}
-.seg button{background:transparent;color:var(--muted);border:1px solid var(--line);padding:8px 12px;font-size:13px;letter-spacing:.06em}
+.seg button{background:transparent;color:var(--muted);border:1px solid var(--line);padding:7px 12px;font-size:13px;letter-spacing:.06em}
 .seg button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#1a1206}
-.game-row{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:10px 0}
-.game-row .who{flex:1;min-width:0;font:500 16px var(--ui);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.game-row code{font:700 16px var(--display);color:var(--gold);letter-spacing:.14em}
+.games,.online{display:flex;flex-direction:column}
+.game-row,.person{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);padding:10px 0}
+.game-row:first-child,.person:first-child{border-top:0;padding-top:0}
+.gm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.gm .who{font:600 16px var(--ui);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gm .meta{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seats{display:inline-flex;gap:3px;vertical-align:middle;margin-right:6px}
+.seats i{width:8px;height:8px;border-radius:50%;border:1px solid var(--muted);display:block}
+.seats i.on{background:var(--good);border-color:var(--good)}
 .game-row button{background:var(--good);color:#0b1a10;padding:8px 14px;font-size:13px}
-.empty{color:var(--muted);font-size:14px;margin:10px 0 0}
-.rules{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);flex:none}
+.dot.busy{background:var(--gold)}
+.person .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font:500 15px var(--ui);overflow:hidden}
+.person .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.person .nm small{font-size:12px;color:var(--muted)}
+.person button{background:var(--gold);color:#1a1206;padding:7px 12px;font-size:12px}
+.log{max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.35}
+.log p{margin:0;overflow-wrap:anywhere}
+.log b{color:var(--gold);font-weight:600;margin-right:6px}
+.log .mine b{color:var(--good)}
+.say{display:flex;gap:8px}
+.say input{flex:1;min-width:0;padding:10px 11px;font-size:16px}
+.empty{color:var(--muted);font-size:14px;margin:0}
+.rules{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:14px;color:var(--muted)}
 .rules dt{font:800 15px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--text)}
 .rules dd{margin:0;line-height:1.4}
 .note{font-size:13px;color:var(--muted);margin:0;line-height:1.45}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.62);display:grid;place-items:center;padding:16px;z-index:20}
+.modal-card{background:#15191b;border:1px solid rgba(232,176,74,.6);border-radius:8px;padding:20px;max-width:340px;width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:12px}
+.modal-card h3{font:800 30px/1 var(--display);text-transform:uppercase;margin:0}
+.modal-card p{margin:0;color:var(--muted)}
+.modal-card .row > button{flex:1 1 0}
+.chatp{position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);max-width:420px;margin:0 auto;background:rgba(18,21,23,.94);border:1px solid var(--line);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:8px;pointer-events:auto;z-index:5;box-sizing:border-box}
+.chatp .log{max-height:140px}
+.quick{display:flex;flex-wrap:wrap;gap:6px}
+.quick button{background:transparent;border:1px solid var(--line);color:var(--text);padding:6px 10px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:500}
 
 /* HUD */
 .hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;gap:8px;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 12px) calc(env(safe-area-inset-bottom,0px) + 14px);box-sizing:border-box}
@@ -98,47 +135,69 @@ input::placeholder{color:#7d8280}
 <canvas id="gl"></canvas>
 <canvas id="ov"></canvas>
 <div class="shade" id="shade"></div>
+<div class="modal" id="chal" hidden>
+  <div class="modal-card" role="dialog" aria-labelledby="chalText">
+    <p class="lbl">Challenge</p>
+    <h3 id="chalText"></h3>
+    <p id="chalSub"></p>
+    <div class="row"><button class="btn-main" id="chalYes">Accept</button><button class="btn-sec" id="chalNo">Decline</button></div>
+  </div>
+</div>
 <div class="loading" id="loading">Setting up the table…</div>
 
 <section class="lobby" id="lobby">
   <div class="lobby-in">
-    <div>
-      <p class="eyebrow">Basement rules · 1 v 1</p>
-      <h1 class="brand">Beer<br>Die</h1>
-      <p class="tag">Flick it high, land it on their half, and make them drop it. Play a friend live or warm up against the CPU.</p>
-    </div>
+    <header class="top">
+      <h1 class="brand">Beer <span>Die</span></h1>
+      <div class="me"><label class="lbl" for="nameIn">Your name</label><input id="nameIn" maxlength="16" placeholder="e.g. King" autocomplete="off"></div>
+    </header>
 
-    <div class="grp">
-      <label class="lbl" for="nameIn">Your name</label>
-      <input id="nameIn" maxlength="16" placeholder="e.g. King" autocomplete="off">
-    </div>
+    <nav class="tabs" role="tablist" aria-label="Menu">
+      <button class="tab" type="button" role="tab" aria-selected="true" data-pane="panePlay">Play</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-pane="paneOnline">Online <span class="badge" id="onlineCount">0</span></button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-pane="paneRules">Rules</button>
+    </nav>
 
-    <div class="grp">
-      <p class="lbl">Play</p>
-      <div class="opts">
-        <div class="seg" id="targetSeg"><span class="lbl">Game to</span><button type="button" data-v="7">7</button><button type="button" data-v="11">11</button></div>
-        <div class="seg" id="fmtSeg"><span class="lbl">Mode</span><button type="button" data-v="1v1">1v1</button><button type="button" data-v="2v2">2v2</button></div>
-        <div class="seg" id="visSeg"><span class="lbl">Lobby</span><button type="button" data-v="public">Public</button><button type="button" data-v="private">Private</button></div>
-        <div class="seg" id="diffSeg"><span class="lbl">CPU</span><button type="button" data-v="easy">Easy</button><button type="button" data-v="medium">Medium</button><button type="button" data-v="hard">Hard</button></div>
-      </div>
-      <div class="row">
+    <div class="pane" id="panePlay">
+      <div class="seg" id="targetSeg"><span class="lbl">Game to</span><button type="button" data-v="7">7</button><button type="button" data-v="11">11</button></div>
+      <div class="card">
+        <div class="card-h"><h2>Play friends</h2><p class="hint">Host a table or join one</p></div>
+        <div class="opts">
+          <div class="seg" id="fmtSeg"><span class="lbl">Mode</span><button type="button" data-v="1v1">1v1</button><button type="button" data-v="2v2">2v2</button></div>
+          <div class="seg" id="visSeg"><span class="lbl">Lobby</span><button type="button" data-v="public">Public</button><button type="button" data-v="private">Private</button></div>
+        </div>
         <button class="btn-main" id="hostBtn">Host a game</button>
-        <button class="btn-sec" id="cpuBtn">Practice vs CPU</button>
+        <div class="row">
+          <input id="codeIn" maxlength="4" placeholder="Code" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em">
+          <button class="btn-sec" id="joinBtn">Join</button>
+        </div>
       </div>
-      <div class="row">
-        <input id="codeIn" maxlength="4" placeholder="Game code" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em">
-        <button class="btn-sec" id="joinBtn">Join by code</button>
+      <div class="card">
+        <div class="card-h"><h2>Open games</h2><p class="hint" id="gamesHint"></p></div>
+        <div class="games" id="games"><p class="empty">Looking for games…</p></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Practice</h2><p class="hint">1v1 against the CPU</p></div>
+        <div class="seg" id="diffSeg"><span class="lbl">CPU</span><button type="button" data-v="easy">Easy</button><button type="button" data-v="medium">Medium</button><button type="button" data-v="hard">Hard</button></div>
+        <button class="btn-sec" id="cpuBtn">Play the CPU</button>
       </div>
       <p class="note" id="netNote"></p>
     </div>
 
-    <div class="grp">
-      <p class="lbl">Open games</p>
-      <div class="games" id="games"><p class="empty">Looking for games…</p></div>
+    <div class="pane" id="paneOnline" hidden>
+      <div class="card">
+        <div class="card-h"><h2>Online now</h2><p class="hint">Challenge anyone in the menu</p></div>
+        <div class="online" id="online"><p class="empty">Looking for players…</p></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Chat</h2><p class="hint">Everyone online sees this</p></div>
+        <div class="log" id="lobbyLog"><p class="empty">No messages yet. Say hi.</p></div>
+        <form class="say" id="lobbySay"><input id="lobbyMsg" maxlength="120" placeholder="Talk your trash…" autocomplete="off"><button class="btn-sec" type="submit">Send</button></form>
+      </div>
     </div>
 
-    <div class="grp">
-      <p class="lbl">House rules</p>
+    <div class="pane" id="paneRules" hidden>
+      <div class="card">
       <dl class="rules">
         <dt>Throw</dt><dd>Swipe up. Angle is aim, length is power.</dd>
         <dt>Drop</dt><dd>Lands on their half and they don't catch it: +1.</dd>
@@ -149,6 +208,7 @@ input::placeholder{color:#7d8280}
         <dt>Modes</dt><dd>Host a 1v1 or 2v2 game, public (listed under Open games) or private (code only). In 2v2 teammates take turns throwing and either one can catch.</dd>
         <dt>Power-ups</dt><dd>Earn one for every Plop (hold up to 2). Aim Guide and Double Down are used on your throw. Sticky Hands and Shaky Hands can be used any time and hit their next throw.</dd>
       </dl>
+      </div>
     </div>
   </div>
 </section>
@@ -162,10 +222,16 @@ input::placeholder{color:#7d8280}
   <div class="tray" id="tray"></div>
   <div class="banner" id="banner"></div>
   <div class="toast" id="toast" hidden></div>
+  <div class="chatp" id="chatPanel" hidden>
+    <div class="log" id="gameLog"><p class="empty">Say something to the table.</p></div>
+    <div class="quick" id="quick"></div>
+    <form class="say" id="gameSay"><input id="gameMsg" maxlength="120" placeholder="Message" autocomplete="off"><button class="btn-sec" type="submit">Send</button></form>
+  </div>
   <div class="foot">
     <p class="status" id="status"></p>
     <div class="controls">
       <button class="leave" id="leaveBtn">Leave</button>
+      <button class="leave" id="chatBtn">Chat</button>
       <button class="act" id="actBtn" hidden>Rematch</button>
     </div>
   </div>
@@ -187,9 +253,12 @@ $('nameIn').value = myName;
 $('nameIn').addEventListener('input', () => {
   myName = $('nameIn').value.trim().slice(0,16);
   try { localStorage.setItem('bd-name', myName); } catch(e){}
-  if (lobbyRoom && hostCode) lobbyRoom.presence({name: nameOr()}).catch(()=>{});
+  if (lobbyRoom) lobbyRoom.presence({name: nameOr()}).catch(()=>{});
 });
-const nameOr = () => (myName || 'Player').slice(0,16);
+// keep slurs out of names and chat
+const BAD = [/n+[i1!|]+[gq]{2,}(?:[e3]+r+|[a@]+h?|u+h+)?[sz]?/gi, /f+[a@4]+g+(?:[o0]+t+)?s?/gi, /\br+[e3]+t+[a@4]+r+d+(?:s|ed)?\b/gi, /\bk+[i1y]+k+[e3]+s?\b/gi, /\bc+h+[i1]+n+k+s?\b/gi, /\bs+p+[i1]+c+s?\b/gi, /\bt+r+[a@4]+n+n+(?:y|ie)s?\b/gi, /\bc+[o0]+[o0]+n+s?\b/gi, /\bw+[e3]+t+b+[a@4]+c+k+s?\b/gi];
+function clean(t){ t = String(t == null ? '' : t).replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff]/g, '').slice(0, 120); BAD.forEach(r => { t = t.replace(r, m => '*'.repeat(m.length)); }); return t; }
+const nameOr = () => clean(myName || 'Player').slice(0,16);
 
 // ---------- state ----------
 let mode = null;          // 'cpu' | 'host' | 'guest'
@@ -588,6 +657,7 @@ let flashTimer = null;
 function flashStatus(t){ $('status').textContent = t; clearTimeout(flashTimer); flashTimer = setTimeout(render, 1600); }
 $('actBtn').addEventListener('click', () => { if (G && !spectator && G.phase === 'over') act('rematch', {}); });
 document.addEventListener('keydown', e => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   if ($('hud').hidden || !G || G.phase !== 'over') return;
   if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); act('rematch', {}); }
 });
@@ -639,13 +709,10 @@ function render(){
   $('shade').classList.toggle('shaken', !!shakenMe);
   $('status').textContent = status;
   renderTray();
-  if (G.feed && G.feed.n !== lastFeed) {
-    lastFeed = G.feed.n;
-    const t = $('toast'); t.textContent = G.feed.text; t.hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
-  }
+  if (G.feed && G.feed.n !== lastFeed) { lastFeed = G.feed.n; showToast(G.feed.text); }
 }
 let lastFeed = 0, toastTimer = null;
+function showToast(text){ const t = $('toast'); t.textContent = text; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2800); }
 let traySig = '';
 function renderTray(){
   const tray = $('tray');
@@ -1000,11 +1067,11 @@ $('loading').hidden = true;
 function showGame(){ $('lobby').hidden = true; $('hud').hidden = false; render(); }
 function showLobby(){
   $('hud').hidden = true; $('lobby').hidden = false;
-  mode = null; G = null; spectator = false; mySide = 'A'; myId = 'me'; clearTimers(); $('shade').classList.remove('shaken');
+  mode = null; G = null; spectator = false; mySide = 'A'; myId = 'me'; clearTimers(); setStatus('menu'); $('shade').classList.remove('shaken');
   aimKey = null; D = null; V = null; stage = 0; swipe = null; trail = null;
 }
 $('cpuBtn').addEventListener('click', () => {
-  mode = 'cpu'; mySide = 'A'; spectator = false; myId = 'me';
+  mode = 'cpu'; mySide = 'A'; spectator = false; myId = 'me'; setStatus('cpu');
   G = newGame({A: [{id:'me', name: nameOr()}], B: [{id:'cpu', name: CPU_LEVELS[cpuLevel].label}]}, gameTo, '1v1'); showGame(); onState();
 });
 let gameFmt = '1v1', gameVis = 'public';
@@ -1014,7 +1081,8 @@ setupSeg('visSeg', () => gameVis, v => { gameVis = v === 'private' ? 'private' :
 $('leaveBtn').addEventListener('click', () => {
   const gr = gameRoom; gameRoom = null; guestPeer = null;
   if (gr) gr.leave().catch(()=>{});
-  if (lobbyRoom && hostCode) lobbyRoom.presence({hosting:null, open:null, fmt:null, filled:null, need:null}).catch(()=>{});
+  if (lobbyRoom) lobbyRoom.presence({hosting:null, open:null, fmt:null, filled:null, need:null, players:null, target:null, challenge:null}).catch(()=>{});
+  pendingChallenge = null; $('chatPanel').hidden = true;
   hostCode = null; showLobby();
 });
 
@@ -1024,32 +1092,38 @@ function waitingScreen(text, names, need){
   $('nmMe').textContent = 'You'; $('scMe').textContent = '0';
   $('nmOpp').textContent = 'Waiting'; $('scOpp').textContent = '0';
   $('sideMe').classList.remove('turn'); $('sideOpp').classList.remove('turn');
-  $('toLbl').textContent = gameFmt + ' · to ' + gameTo;
-  setBanner((gameVis === 'private' ? 'Private · ' : '') + 'Code ' + hostCode,
-    text || (gameVis === 'private' ? 'Only people you give this code to can join' : 'Friends can join from Open games or with this code'));
+  $('toLbl').textContent = hostCfg.fmt + ' · to ' + gameTo;
+  setBanner((hostCfg.pub ? '' : 'Private · ') + 'Code ' + hostCode,
+    text || (hostCfg.pub ? 'Friends can join from Open games or with this code' : 'Only people you give this code to can join'));
   $('actBtn').hidden = true; $('tray').innerHTML = ''; traySig = '';
-  const have = names ? names.length : 1, total = need || (gameFmt === '2v2' ? 4 : 2);
+  const have = names ? names.length : 1, total = need || (hostCfg.fmt === '2v2' ? 4 : 2);
   $('status').textContent = 'Players ' + have + '/' + total + (names ? ': ' + names.join(', ') : '') + (have < total ? '. Waiting…' : '');
 }
 const OFFLINE_MSG = 'Live play can’t connect on this device. Open Beer Die from an invite sent to your email (Share → add your email), signed in to Claude. A public link won’t work. Practice vs CPU works anywhere.';
 let offline = false;
 function needRoom(){ if (room) return true; $('netNote').textContent = offline ? OFFLINE_MSG : 'Still connecting. Try again in a second.'; $('netNote').style.color = 'var(--gold)'; return false; }
-async function hostGame(){
+let hostCfg = {fmt: '1v1', pub: true};
+async function hostGame(opts){
+  opts = opts || {};
   if (!needRoom()) return;
   hostCode = code4();
   try { gameRoom = await room.join('bd-' + hostCode.toLowerCase()); }
   catch(e){ $('netNote').textContent = 'Couldn’t open a game room right now. Try again in a moment.'; hostCode = null; return; }
   mode = 'host'; mySide = 'A'; spectator = false; myId = 'host'; G = null;
-  const fmt = gameFmt, need = fmt === '2v2' ? 3 : 1, pub = gameVis === 'public';
+  const fmt = opts.fmt || gameFmt, need = fmt === '2v2' ? 3 : 1, pub = opts.private ? false : gameVis === 'public';
+  hostCfg = {fmt, pub};
+  chats.game = []; myChat.game = []; renderChat('game');
+  setStatus('hosting');
   let order = [];                       // guests in the order they arrived
   let lastAd = '', lastWait = '';     // only publish when something changed, never in a loop
-  const advertise = (filled) => { const ad = {hosting: pub ? hostCode : null, name: nameOr(), open: pub && filled < need + 1, fmt, filled, need: need + 1};
+  const advertise = (names) => { const filled = names.length; const ad = {hosting: pub ? hostCode : null, name: nameOr(), open: pub && filled < need + 1, fmt, target: gameTo, filled, need: need + 1, players: names};
     const k = JSON.stringify(ad); if (k !== lastAd) { lastAd = k; room.presence(ad).catch(()=>{}); } };
   const announceWait = (names) => { const k = JSON.stringify(names); if (k !== lastWait) { lastWait = k; gameRoom.presence({wait:{fmt, names, need: need + 1}}).catch(()=>{}); } };
   gameRoom.presence({role:'host', name: nameOr(), game:null, wait:{fmt, names:[nameOr()], need: need + 1}}).catch(()=>{});
-  advertise(1);
+  advertise([nameOr()]);
   showGame(); waitingScreen(null, [nameOr()], need + 1);
   gameRoom.onPeers(ch => {
+    ingestChat('game', ch.peers);
     const guests = ch.peers.filter(p => !p.sameTab && p.presence && p.presence.role === 'guest');
     const here = new Set(guests.map(p => p.peer));
     order = order.filter(id => here.has(id));
@@ -1064,15 +1138,17 @@ async function hostGame(){
       }
     }
     if (!G) {
-      const seated = order.slice(0, need).map(id => ({id, name: String((byId(id).presence.name)||'Guest').slice(0,16)}));
+      const seated = order.slice(0, need).map(id => ({id, name: clean(byId(id).presence.name || 'Guest').slice(0,16)}));
       const names = [nameOr(), ...seated.map(p => p.name)];
       announceWait(names);
-      advertise(names.length);
-      if (seated.length < need) { waitingScreen(null, names, need + 1); return; }
+      advertise(names);
+      if (seated.length < need) { waitingScreen(pendingChallenge ? 'Challenge sent to ' + pendingChallenge.name + '. Waiting for them to accept…' : null, names, need + 1); return; }
       const me = {id:'host', name: nameOr()};
       const seats = fmt === '2v2' ? {A: [me, seated[1]], B: [seated[0], seated[2]]} : {A: [me], B: [seated[0]]};
       G = newGame(seats, gameTo, fmt);
-      advertise(need + 1);
+      advertise(names);
+      if (pendingChallenge) { pendingChallenge = null; room.presence({challenge: null}).catch(()=>{}); }
+      setStatus('playing');
       commit();
     }
     guests.forEach(p => { if (teamOf(p.peer)) handleIntent(p.presence.intent, p.peer); });
@@ -1085,6 +1161,7 @@ async function joinGame(code){
   try { gameRoom = await room.join('bd-' + code.toLowerCase()); }
   catch(e){ $('netNote').textContent = 'Couldn’t join that game right now. Try again in a moment.'; return; }
   mode = 'guest'; mySide = 'B'; spectator = false; G = null; myId = '';
+  chats.game = []; myChat.game = []; renderChat('game'); setStatus('playing');
   gameRoom.presence({role:'guest', name: nameOr(), intent:null}).catch(()=>{});
   showGame();
   setBanner('Joining ' + code, ''); $('status').textContent = 'Connecting…';
@@ -1092,6 +1169,7 @@ async function joinGame(code){
   setTimeout(() => { if (!sawHost && mode === 'guest') { setBanner('No game', 'Nobody is hosting ' + code + ' right now'); $('status').textContent = 'Tap Leave to go back.'; } }, 6000);
   gameRoom.onPeers(ch => {
     const me = ch.peers.find(p => p.sameTab); if (me) { myPeer = me.peer; myId = me.peer; }
+    ingestChat('game', ch.peers);
     const host = ch.peers.find(p => p.presence && p.presence.role === 'host');
     if (!host) { if (sawHost) { G = null; D = null; clearTimers(); setBanner('Host left', 'This game is over'); $('status').textContent = ''; } return; }
     sawHost = true;
@@ -1119,16 +1197,129 @@ $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') joinGame($
 function renderGames(peers){
   const boxEl = $('games'); boxEl.innerHTML = '';
   const list = peers.filter(p => !p.sameTab && p.presence && p.presence.hosting && p.presence.open);
-  if (!list.length) { const e = document.createElement('p'); e.className='empty'; e.textContent='No open games yet. Host one and it shows up here for your friends.'; boxEl.appendChild(e); return; }
+  $('gamesHint').textContent = list.length ? list.length + ' open' : '';
+  if (!list.length) { const e = document.createElement('p'); e.className='empty'; e.textContent='No open games right now. Host one and it shows up here.'; boxEl.appendChild(e); return; }
   list.forEach(p => {
-    const code = String(p.presence.hosting).slice(0,4);
+    const pr = p.presence, code = String(pr.hosting).slice(0,4), need = Math.min(4, pr.need|0) || 2, filled = Math.min(need, pr.filled|0);
     const r = document.createElement('div'); r.className = 'game-row';
-    const w = document.createElement('span'); w.className = 'who';
-    w.textContent = String(p.presence.name||'Someone').slice(0,16) + '’s table · ' + (p.presence.fmt === '2v2' ? '2v2' : '1v1') + (p.presence.need ? ' · ' + (p.presence.filled|0) + '/' + (p.presence.need|0) : '');
-    const c = document.createElement('code'); c.textContent = code;
+    const gm = document.createElement('div'); gm.className = 'gm';
+    const w = document.createElement('span'); w.className = 'who'; w.textContent = clean(pr.name || 'Someone').slice(0,16) + '’s table';
+    const meta = document.createElement('span'); meta.className = 'meta';
+    const dots = document.createElement('span'); dots.className = 'seats';
+    for (let i = 0; i < need; i++) { const d = document.createElement('i'); if (i < filled) d.className = 'on'; dots.appendChild(d); }
+    const names = Array.isArray(pr.players) ? pr.players.slice(0,4).map(n => clean(n).slice(0,16)).join(', ') : '';
+    meta.append(dots, document.createTextNode(filled + '/' + need + ' players · ' + (pr.fmt === '2v2' ? '2v2' : '1v1') + ' · to ' + (pr.target === 11 ? 11 : 7) + (names ? ' · ' + names : '')));
+    gm.append(w, meta);
     const b = document.createElement('button'); b.textContent = 'Join'; b.addEventListener('click', () => joinGame(code));
-    r.append(w, c, b); boxEl.appendChild(r);
+    r.append(gm, b); boxEl.appendChild(r);
   });
+}
+
+// ---------- lobby tabs, who's online, chat, challenges ----------
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', String(x === t)));
+  document.querySelectorAll('.pane').forEach(p => { p.hidden = p.id !== t.dataset.pane; });
+}));
+let lobbyMe = null, lobbyStatus = 'menu';
+function setStatus(st){ lobbyStatus = st; if (lobbyRoom) lobbyRoom.presence({status: st, name: nameOr()}).catch(()=>{}); }
+const STATUS_TEXT = {menu:'In the menu', hosting:'Hosting a game', playing:'In a game', cpu:'Playing the CPU'};
+function renderOnline(peers){
+  const list = peers.filter(p => p.presence && (p.presence.name || p.sameTab));
+  $('onlineCount').textContent = list.length;
+  const box = $('online'); box.innerHTML = '';
+  list.sort((a, b) => (b.sameTab - a.sameTab)).forEach(p => {
+    const st = p.sameTab ? lobbyStatus : (p.presence.status || 'menu');
+    const r = document.createElement('div'); r.className = 'person';
+    const d = document.createElement('span'); d.className = 'dot' + (st === 'menu' ? '' : ' busy');
+    const nm = document.createElement('div'); nm.className = 'nm';
+    const n1 = document.createElement('span'); n1.textContent = (p.sameTab ? nameOr() : clean(p.presence.name || 'Someone').slice(0,16)) + (p.sameTab ? ' (you)' : '');
+    const n2 = document.createElement('small'); n2.textContent = STATUS_TEXT[st] || 'Online';
+    nm.append(n1, n2); r.append(d, nm);
+    if (!p.sameTab && st === 'menu') {
+      const b = document.createElement('button'); b.textContent = 'Challenge';
+      b.addEventListener('click', () => challenge(p.peer, clean(p.presence.name || 'them').slice(0,16)));
+      r.appendChild(b);
+    }
+    box.appendChild(r);
+  });
+}
+// chat rides along in presence: each person keeps their last few lines there
+const chats = {lobby: [], game: []}, myChat = {lobby: [], game: []}, seenChat = {};
+let chatN = 0;
+function sendChat(where, text){
+  text = clean(text).trim(); if (!text) return;
+  const m = {n: ++chatN, t: text, at: Date.now()};
+  myChat[where].push(m); if (myChat[where].length > 6) myChat[where].shift();
+  const r = where === 'lobby' ? lobbyRoom : gameRoom;
+  if (r) r.presence({chat: myChat[where]}).catch(()=>{});
+  addChat(where, nameOr(), text, true);
+}
+function ingestChat(where, peers){
+  peers.forEach(p => {
+    if (p.sameTab || !p.presence || !Array.isArray(p.presence.chat)) return;
+    p.presence.chat.forEach(m => {
+      if (!m || typeof m.n !== 'number') return;
+      const k = where + ':' + p.peer + ':' + m.n; if (seenChat[k]) return; seenChat[k] = 1;
+      if (Math.abs(Date.now() - (+m.at || 0)) > 180000) return;
+      addChat(where, clean(p.presence.name || 'Someone').slice(0,16), clean(m.t));
+    });
+  });
+}
+function addChat(where, name, text, mine){
+  const arr = chats[where]; arr.push({name, text, mine}); if (arr.length > 40) arr.shift();
+  renderChat(where);
+  if (where === 'game' && !mine && !$('hud').hidden && $('chatPanel').hidden) showToast(name + ': ' + text);
+}
+function renderChat(where){
+  const box = $(where === 'lobby' ? 'lobbyLog' : 'gameLog'); box.innerHTML = '';
+  if (!chats[where].length) { const e = document.createElement('p'); e.className = 'empty'; e.textContent = where === 'lobby' ? 'No messages yet. Say hi.' : 'Say something to the table.'; box.appendChild(e); return; }
+  chats[where].forEach(c => { const p = document.createElement('p'); if (c.mine) p.className = 'mine'; const b = document.createElement('b'); b.textContent = c.name; p.append(b, document.createTextNode(c.text)); box.appendChild(p); });
+  box.scrollTop = box.scrollHeight;
+}
+$('lobbySay').addEventListener('submit', e => { e.preventDefault(); sendChat('lobby', $('lobbyMsg').value); $('lobbyMsg').value = ''; });
+$('gameSay').addEventListener('submit', e => { e.preventDefault(); sendChat('game', $('gameMsg').value); $('gameMsg').value = ''; });
+$('chatBtn').addEventListener('click', () => { const p = $('chatPanel'); p.hidden = !p.hidden; if (!p.hidden) renderChat('game'); });
+['Nice throw','Lucky','Too easy','You’re cooked','Run it back','GG'].forEach(q => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = q; b.addEventListener('click', () => sendChat('game', q)); $('quick').appendChild(b);
+});
+// challenges: host a private 1v1 and point it at one person
+let pendingChallenge = null, chalN = 0, openChal = null;
+const seenChal = {};
+async function challenge(peerId, name){
+  if (!needRoom() || mode) return;
+  await hostGame({fmt: '1v1', private: true});
+  if (!hostCode) return;
+  pendingChallenge = {to: peerId, name, n: ++chalN};
+  room.presence({challenge: {to: peerId, code: hostCode, fmt: '1v1', target: gameTo, n: chalN}}).catch(()=>{});
+  waitingScreen('Challenge sent to ' + name + '. Waiting for them to accept…', [nameOr()], 2);
+}
+function checkChallenges(peers){
+  if (!lobbyMe) return;
+  peers.forEach(p => {
+    const c = p.presence && p.presence.challenge;
+    if (!c || c.to !== lobbyMe || typeof c.n !== 'number' || !/^[A-Z]{4}$/.test(String(c.code))) return;
+    const k = p.peer + ':' + c.n; if (seenChal[k]) return; seenChal[k] = 1;
+    if (mode) { room.presence({decline: {to: p.peer, n: c.n}}).catch(()=>{}); return; }   // busy in a game
+    openChal = {from: p.peer, n: c.n, code: String(c.code)};
+    $('chalText').textContent = clean(p.presence.name || 'Someone').slice(0,16) + ' challenges you';
+    $('chalSub').textContent = '1v1 · first to ' + (c.target === 11 ? 11 : 7);
+    $('chal').hidden = false;
+  });
+  if (openChal && !peers.some(p => p.peer === openChal.from && p.presence && p.presence.challenge && p.presence.challenge.n === openChal.n)) { openChal = null; $('chal').hidden = true; }
+  if (pendingChallenge) peers.forEach(p => {
+    const d = p.presence && p.presence.decline;
+    if (d && d.to === lobbyMe && d.n === pendingChallenge.n) {
+      showToast(pendingChallenge.name + ' declined your challenge');
+      waitingScreen(pendingChallenge.name + ' declined. Wait here for someone else or leave.', [nameOr()], 2);
+      room.presence({challenge: null}).catch(()=>{}); pendingChallenge = null;
+    }
+  });
+}
+$('chalYes').addEventListener('click', () => { const c = openChal; $('chal').hidden = true; openChal = null; if (c) joinGame(c.code); });
+$('chalNo').addEventListener('click', () => { const c = openChal; $('chal').hidden = true; openChal = null; if (c) room.presence({decline: {to: c.from, n: c.n}}).catch(()=>{}); });
+function onLobbyPeers(peers){
+  const me = peers.find(p => p.sameTab); if (me) lobbyMe = me.peer;
+  renderGames(peers); renderOnline(peers); ingestChat('lobby', peers); checkChallenges(peers);
 }
 // ---------- live play over a public MQTT relay (works phone to phone, any network) ----------
 const BROKER = (new URLSearchParams(location.search).get('broker')) || 'wss://broker.hivemq.com:8884/mqtt';
@@ -1183,7 +1374,8 @@ function mqttRooms(url, prefix){
   if (!window.mqtt) { offline = true; $('games').innerHTML = ''; $('netNote').textContent = 'Couldn’t load live play. Check your connection and reload. Practice vs CPU still works.'; return; }
   const r = mqttRooms(BROKER, PREFIX);
   room = r; lobbyRoom = r;
-  r.onPeers(ch => renderGames(ch.peers));
+  r.onPeers(ch => onLobbyPeers(ch.peers));
+  r.presence({name: nameOr(), status: 'menu'}).catch(()=>{});
   const note = $('netNote');
   note.textContent = 'Connecting to live play…';
   r.client.on('connect', () => { note.textContent = ''; note.style.color = ''; });
