@@ -1,4 +1,4 @@
-# Turning on Beer Die accounts (Firebase)
+# Turning on Beer Dye accounts (Firebase)
 
 Accounts keep each player's level, XP, name, arena and table in the cloud, so progress follows them to any phone. Until `firebase-config.js` is filled in, the game runs without logins and progress stays on each device.
 

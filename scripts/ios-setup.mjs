@@ -16,7 +16,7 @@ let plist = fs.readFileSync(plistPath, 'utf8');
 const add = (key, xml) => { if (!plist.includes(`<key>${key}</key>`)) plist = plist.replace(/<\/dict>\s*<\/plist>\s*$/, `\t<key>${key}</key>\n${xml}\n</dict>\n</plist>\n`); };
 
 add('GADApplicationIdentifier', `\t<string>${ADMOB_APP_ID}</string>`);
-add('NSUserTrackingUsageDescription', '\t<string>This lets Beer Die show ads that are more relevant to you. Ads pay for the game.</string>');
+add('NSUserTrackingUsageDescription', '\t<string>This lets Beer Dye show ads that are more relevant to you. Ads pay for the game.</string>');
 add('ITSAppUsesNonExemptEncryption', '\t<false/>');
 add('SKAdNetworkItems', '\t<array>\n' + SKADNETWORKS.map(id => `\t\t<dict>\n\t\t\t<key>SKAdNetworkIdentifier</key>\n\t\t\t<string>${id}.skadnetwork</string>\n\t\t</dict>`).join('\n') + '\n\t</array>');
 // the game is built for portrait: lock iPhone to portrait

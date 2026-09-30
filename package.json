@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Beer Die: 3D multiplayer beer die for iPhone and the web",
+  "description": "Beer Dye: 3D multiplayer beer dye for iPhone and the web",
   "scripts": {
     "build": "node scripts/build-app.mjs",
     "ios:add": "npm run build && npx cap add ios && node scripts/ios-setup.mjs",

@@ -1,4 +1,4 @@
-# Putting Beer Die on the App Store (with ads)
+# Putting Beer Dye on the App Store (with ads)
 
 Everything in this repository is already set up for an iPhone app: the Xcode project (`ios/`), the app icon and launch screen, AdMob ads between games, account deletion, chat report/block, and a privacy policy page. What's left needs your Apple and Google accounts and your Mac.
 
@@ -48,7 +48,7 @@ Any time the game changes, run `npm run ios` again to rebuild the app with the l
 
 ## 4. Real ads: set up Google AdMob
 1. Go to https://admob.google.com and sign in with your Google account. Fill in payment info (this is how you get paid).
-2. **Apps → Add app → iOS**. Say it's not published yet. Name it **Beer Die**.
+2. **Apps → Add app → iOS**. Say it's not published yet. Name it **Beer Dye**.
 3. Copy the **App ID** (looks like `ca-app-pub-1234567890123456~1234567890`, with a `~`).
 4. **Ad units → Add ad unit → Interstitial**, name it `between-games`. Copy the **ad unit ID** (with a `/`).
 5. In this repository:
@@ -60,7 +60,7 @@ Never tap your own real ads; Google bans accounts for that. Keep `testing: true`
 
 ## 5. Create the app in App Store Connect
 1. https://appstoreconnect.apple.com → **Apps → + → New App**.
-   - Platform: iOS · Name: **Beer Die** (or another name if taken) · Language: English
+   - Platform: iOS · Name: **Beer Dye** (or another name if taken) · Language: English
    - Bundle ID: **com.matthiasg26.beerdie** (create it at developer.apple.com → Identifiers if it's not listed)
    - SKU: `beerdie1`
 2. **App Privacy**: answer the questionnaire:

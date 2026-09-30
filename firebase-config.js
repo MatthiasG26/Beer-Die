@@ -1,4 +1,4 @@
-// Beer Die accounts: paste your Firebase web app config here to turn on logins.
+// Beer Dye accounts: paste your Firebase web app config here to turn on logins.
 // Firebase console → Project settings → Your apps → Web app → "SDK setup and configuration" → Config.
 // These values are not secrets; access is protected by the Firestore rules in ACCOUNTS.md.
 // Leave it as null and the game runs without accounts (progress stays on each phone).
