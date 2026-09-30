@@ -132,7 +132,7 @@ input::placeholder{color:#7d8280}
         <dt>FIFA</dt><dd>Only when the die goes off the table untouched, including a throw that goes long: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
         <dt>Plink</dt><dd>Off the side of a cup: +2 if they drop it, nothing if they catch it. It comes off fast, so it’s much harder to catch.</dd>
         <dt>Plop</dt><dd>In the cup: +3. First to 7 wins.</dd>
-        <dt>Power-ups</dt><dd>Earn one for every catch, FIFA or Plop (hold up to 2). Aim Guide and Double Down are used on your throw; Sticky Hands and Shaky Hands while they line up theirs.</dd>
+        <dt>Power-ups</dt><dd>Earn one for every Plop (hold up to 2). Aim Guide and Double Down are used on your throw; Sticky Hands and Shaky Hands while they line up theirs.</dd>
       </dl>
     </div>
   </div>
@@ -287,13 +287,13 @@ function doCatch(side, res, id){
   G.shot.res = res;
   const pl = G.shot.out === 'plink';
   if (G.shot.out === 'long') {
-    if (res === 'fifa') { G.score[side] += 1; award(side); finish('FIFA', 'Kicked the long one up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
+    if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked the long one up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
     else finish('Long', 'Sailed off the end · no point', 'bad', id);
     return;
   }
   const mult = G.shot.mult || 1, dd = mult > 1 ? ' (Double Down)' : '';
-  if (res === 'caught') { award(side); finish('Caught', pl ? 'Saved a plink · no point' : 'One hand, clean · no point', 'bad', id); }
-  else if (res === 'fifa') { G.score[side] += 1; award(side); finish('FIFA', 'Kicked it up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
+  if (res === 'caught') { finish('Caught', pl ? 'Saved a plink · no point' : 'One hand, clean · no point', 'bad', id); }
+  else if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked it up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
   else { const pts = (pl ? 2 : 1) * mult; G.score[G.thrower] += pts; finish(pl ? 'Plink' : 'Dropped', (pl ? 'Off the cup and dropped · +' : 'Hit the table, not caught · +') + pts + dd, 'good', id); }
 }
 
