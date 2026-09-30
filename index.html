@@ -187,7 +187,7 @@ const seenAt = {};
 let timers = [];
 const other = s => s === 'A' ? 'B' : 'A';
 const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
-const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+const later = (fn, ms) => { if (timers.length > 200) timers = timers.slice(-40); timers.push(setTimeout(fn, ms)); };
 
 // ---------- engine (host or CPU mode) ----------
 // power-ups: earned by good plays, spent at the right moment of a turn
@@ -368,6 +368,7 @@ let swipe = null, trail = null, tapFx = null;
 function amDefender(){ return G && !spectator && G.thrower !== mySide; }
 
 function onState(){
+  sceneDirty = 2;
   if (!G) { render(); return; }
   if (mode === 'local' && G.phase !== 'over') mySide = G.phase === 'aim' ? G.thrower : other(G.thrower);
   const s = G.shot, now = performance.now();
@@ -608,10 +609,14 @@ function renderTray(){
 if (!window.THREE) { $('loading').textContent = 'The 3D table couldn’t load. Check your connection and reload.'; return; }
 const glc = $('gl');
 const renderer = new THREE.WebGLRenderer({canvas: glc, antialias: true, powerPreference: 'high-performance'});
-renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+// phones get a lighter render so they don't heat up and throttle after a few minutes
+const MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) < 820);
+let dpr = Math.min(devicePixelRatio || 1, MOBILE ? 1.5 : 2);
+renderer.setPixelRatio(dpr);
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
-renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = MOBILE ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;   // shadows only re-render when something moves
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x08090a);
 scene.fog = new THREE.Fog(0x08090a, 22, 44);
@@ -762,7 +767,7 @@ const bulbs = [];
 scene.add(new THREE.HemisphereLight(0xc9d6e3, 0x2b2118, 0.28));
 const lamp = new THREE.SpotLight(0xffdcae, 2.1, 34, 0.95, 0.55, 1.2);
 lamp.position.set(0, TH + 6.2, 0); lamp.target.position.set(0, 0, 0);
-lamp.castShadow = true; lamp.shadow.mapSize.set(2048, 2048); lamp.shadow.bias = -0.0004; lamp.shadow.radius = 4; lamp.shadow.camera.near = 1; lamp.shadow.camera.far = 20;
+lamp.castShadow = true; lamp.shadow.mapSize.set(MOBILE ? 1024 : 2048, MOBILE ? 1024 : 2048); lamp.shadow.bias = -0.0004; lamp.shadow.radius = 4; lamp.shadow.camera.near = 1; lamp.shadow.camera.far = 20;
 scene.add(lamp, lamp.target);
 const lamp2 = new THREE.PointLight(0xffd2a0, 0.35, 16, 1.6); lamp2.position.set(0, TH + 5.7, 0); scene.add(lamp2);
 const glow = new THREE.PointLight(0xffc07a, 0.7, 16, 1.8); glow.position.set(0, 8.2, -11.5); scene.add(glow);
@@ -804,19 +809,22 @@ const dieSize = q => Math.max(8, DIE * q.k);
 
 // ---------- frame ----------
 let lastT = performance.now();
+const lobbyPos = new THREE.Vector3(), lobbyLook = new THREE.Vector3(0, TH, 0), lookTmp = new THREE.Vector3();
+let frameNo = 0, sceneDirty = 3, perfSum = 0, perfN = 0;
+addEventListener('resize', () => { sceneDirty = 3; renderer.shadowMap.needsUpdate = true; });
 function frame(now){
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
-  const inGame = !$('hud').hidden;
-  camBlend += ((inGame ? 1 : 0) - camBlend) * Math.min(1, dt*2.2);
+  const t0 = performance.now();
+  const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now; frameNo++;
+  const inGame = !$('hud').hidden, target = inGame ? 1 : 0;
+  const moving = Math.abs(target - camBlend) > 0.001;
+  camBlend += (target - camBlend) * Math.min(1, dt*2.2);
   const a = Math.sin(now*0.00009) * 0.55, R = 16.5;
-  const lobbyPos = new THREE.Vector3(Math.sin(a)*R, 7.2, Math.cos(a)*R*0.9);
-  const lobbyLook = new THREE.Vector3(0, TH, 0);
+  lobbyPos.set(Math.sin(a)*R, 7.2, Math.cos(a)*R*0.9);
   camera.position.copy(lobbyPos).lerp(GAME_CAM.pos, camBlend);
-  camera.lookAt(lobbyLook.clone().lerp(GAME_CAM.look, camBlend));
-  if (inGame && G && G.phase === 'aim' && !spectator && G.thrower === mySide && G.armed && G.armed[other(mySide)] && G.armed[other(mySide)].shaky) {
-    camera.position.x += Math.sin(now*0.047)*0.05; camera.position.y += Math.sin(now*0.061)*0.035; camera.lookAt(GAME_CAM.look);
-  }
+  camera.lookAt(lookTmp.copy(lobbyLook).lerp(GAME_CAM.look, camBlend));
+  const shaky = inGame && G && G.phase === 'aim' && !spectator && G.thrower === mySide && G.armed && G.armed[other(mySide)] && G.armed[other(mySide)].shaky;
+  if (shaky) { camera.position.x += Math.sin(now*0.047)*0.05; camera.position.y += Math.sin(now*0.061)*0.035; camera.lookAt(GAME_CAM.look); }
 
   if (inGame && G) defTick(now);
   const d = inGame && G ? diePos(now) : null;
@@ -841,9 +849,17 @@ function frame(now){
     if (m.userData.t > 0.9 || m.position.y < TH) { scene.remove(m); drops.splice(i,1); } }
   const gold = !!(d && G && G.shot && G.shot.mult > 1);
   if (die.userData.gold !== gold) { die.userData.gold = gold; die.material.forEach(m => { m.emissive.setHex(gold ? 0x6a4300 : 0x000000); }); }
-  bulbs.forEach((b, i) => { b.scale.setScalar(0.92 + 0.08*Math.sin(now*0.002 + i*1.7)); });
-
-  renderer.render(scene, camera);
+  // only redraw the 3D scene when something in it changes; the lobby pan runs at 30 fps
+  const wobbling = cups.some(c => c.g.rotation.z !== 0);
+  const busy = die.visible || drops.length > 0 || wobbling || shaky || moving;
+  if (die.visible || wobbling || drops.length) renderer.shadowMap.needsUpdate = true;
+  if (busy || sceneDirty > 0 || (!inGame && frameNo % 2 === 0)) {
+    if (sceneDirty > 0) sceneDirty--;
+    renderer.render(scene, camera);
+    // if the phone still can't keep up, drop to native-ish resolution once
+    perfSum += performance.now() - t0; perfN++;
+    if (perfN >= 90) { if (perfSum / perfN > 22 && dpr > 1) { dpr = 1; renderer.setPixelRatio(1); fitCamera(); sceneDirty = 3; renderer.shadowMap.needsUpdate = true; } perfSum = 0; perfN = 0; }
+  }
   drawOverlay(now, d);
 }
 
@@ -1031,8 +1047,8 @@ function mqttRooms(url, prefix){
         peers.set(id, {presence: (v.presence && typeof v.presence === 'object') ? v.presence : {}, seen: Date.now()}); emit();
       } catch(e){}
     };
-    client.subscribe(base + '+'); client.on('message', onMsg);
-    client.on('connect', () => { client.subscribe(base + '+'); pub(); });
+    const onConn = () => { client.subscribe(base + '+'); pub(); };
+    client.subscribe(base + '+'); client.on('message', onMsg); client.on('connect', onConn);
     const hb = setInterval(pub, 4000);
     const room = {
       name,
@@ -1040,7 +1056,7 @@ function mqttRooms(url, prefix){
       onPeers(fn){ listeners.push(fn); setTimeout(emit, 0); return () => { listeners = listeners.filter(f => f !== fn); }; },
       peers: list,
       connected: () => client.connected,
-      leave(){ left = true; clearInterval(hb); if (client.connected) client.publish(base + me, '', {retain: true}); client.unsubscribe(base + '+'); client.removeListener('message', onMsg); delete rooms[name]; return Promise.resolve(); }
+      leave(){ left = true; clearInterval(hb); if (client.connected) client.publish(base + me, '', {retain: true}); client.unsubscribe(base + '+'); client.removeListener('message', onMsg); client.removeListener('connect', onConn); delete rooms[name]; return Promise.resolve(); }
     };
     return room;
   }
