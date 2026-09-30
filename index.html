@@ -120,7 +120,7 @@ input::placeholder{color:#7d8280}
         <dt>Drop</dt><dd>Lands on their half and they don't catch it: +1.</dd>
         <dt>Catch</dt><dd>Tap the die while its ring is green.</dd>
         <dt>FIFA</dt><dd>Only when the die goes off the table untouched, including a throw that goes long: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
-        <dt>Plink</dt><dd>Off the side of a cup: +1, unless they catch it. It comes off fast, so it’s much harder to catch.</dd>
+        <dt>Plink</dt><dd>Off the side of a cup: +2 if they drop it, nothing if they catch it. It comes off fast, so it’s much harder to catch.</dd>
         <dt>Plop</dt><dd>In the cup: +3. First to 7 wins.</dd>
       </dl>
     </div>
@@ -246,7 +246,7 @@ function doCatch(side, res, id){
   }
   if (res === 'caught') finish('Caught', pl ? 'Saved a plink · no point' : 'One hand, clean · no point', 'bad', id);
   else if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked it up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
-  else { G.score[G.thrower] += 1; finish(pl ? 'Plink' : 'Dropped', pl ? 'Rang the cup and got away · +1' : 'Hit the table, not caught · +1', 'good', id); }
+  else { G.score[G.thrower] += pl ? 2 : 1; finish(pl ? 'Plink' : 'Dropped', pl ? 'Off the cup and dropped · +2' : 'Hit the table, not caught · +1', 'good', id); }
 }
 
 function finish(msg, sub, tone, id){
@@ -591,7 +591,7 @@ function drawBoard(g, w, h){
   g.fillStyle='rgba(240,238,228,.9)'; g.textAlign='left';
   g.font='600 64px Caveat, cursive'; g.fillText('House Rules', 44, 96);
   g.font='600 42px Caveat, cursive';
-  ['Drop ........ 1','Plink ....... 1','Plop ......... 3','FIFA ......... 1','Game to 7','No re-throws'].forEach((t,i)=> g.fillText(t, 52, 170 + i*56));
+  ['Drop ........ 1','Plink ....... 2','Plop ......... 3','FIFA ......... 1','Game to 7','No re-throws'].forEach((t,i)=> g.fillText(t, 52, 170 + i*56));
 }
 boardTex = canvasTex(512, 520, drawBoard);
 if (document.fonts && document.fonts.load) document.fonts.load('600 40px Caveat').then(() => { const c = boardTex.image; drawBoard(c.getContext('2d'), c.width, c.height); boardTex.needsUpdate = true; }).catch(()=>{});
