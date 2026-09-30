@@ -129,10 +129,10 @@ input::placeholder{color:#7d8280}
         <dt>Throw</dt><dd>Swipe up. Angle is aim, length is power.</dd>
         <dt>Drop</dt><dd>Lands on their half and they don't catch it: +1.</dd>
         <dt>Catch</dt><dd>Tap the die while its ring is green.</dd>
-        <dt>FIFA</dt><dd>Only when the die goes off the table untouched, including a throw that goes long: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
+        <dt>FIFA</dt><dd>Only when the die goes off the table untouched, including a throw that goes long or wide on your half: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
         <dt>Plink</dt><dd>Off the side of a cup: +2 if they drop it, nothing if they catch it. It comes off fast, so it’s much harder to catch.</dd>
         <dt>Plop</dt><dd>In the cup: +3. First to 7 wins.</dd>
-        <dt>Power-ups</dt><dd>Earn one for every Plop (hold up to 2). Aim Guide and Double Down are used on your throw; Sticky Hands and Shaky Hands while they line up theirs.</dd>
+        <dt>Power-ups</dt><dd>Earn one for every Plop (hold up to 2). Aim Guide and Double Down are used on your throw. Sticky Hands and Shaky Hands can be used any time and hit their next throw.</dd>
       </dl>
     </div>
   </div>
@@ -194,8 +194,8 @@ const later = (fn, ms) => { if (timers.length > 200) timers = timers.slice(-40);
 const PU = {
   guide:  {name:'Aim Guide',    when:'throw',  desc:'See where it lands'},
   double: {name:'Double Down',  when:'throw',  desc:'This throw scores x2'},
-  sticky: {name:'Sticky Hands', when:'defend', desc:'2x time to catch'},
-  shaky:  {name:'Shaky Hands',  when:'defend', desc:'Their throw wobbles'},
+  sticky: {name:'Sticky Hands', when:'defend', desc:'2x time on their next throw'},
+  shaky:  {name:'Shaky Hands',  when:'defend', desc:'Their next throw wobbles'},
 };
 const PU_KEYS = Object.keys(PU);
 function newGame(names, bPeer){
@@ -210,8 +210,11 @@ function award(side){
   G.pu[side].push(k); feed(side, (G.names[side]||'Player') + ' earned ' + PU[k].name);
 }
 function canUse(side, kind){
-  if (!G || G.phase !== 'aim' || !PU[kind] || !G.pu[side].includes(kind) || G.armed[side][kind]) return false;
-  return PU[kind].when === 'throw' ? G.thrower === side : G.thrower !== side;
+  if (!G || !PU[kind] || !G.pu[side].includes(kind) || G.armed[side][kind]) return false;
+  if (PU[kind].when === 'throw') return G.phase === 'aim' && G.thrower === side;
+  // defensive ones queue up for the opponent's next throw; only locked while their throw is in the air
+  if (G.phase === 'over') return false;
+  return !((G.phase === 'flight' || G.phase === 'catch') && G.thrower !== side);
 }
 function usePU(side, kind){
   if (!canUse(side, kind)) return;
@@ -232,7 +235,7 @@ function doThrow(side, aim, power){
   const mine = G.armed[side], theirs = G.armed[other(side)];
   const shaken = !!theirs.shaky, sticky = !!theirs.sticky, mult = mine.double ? 2 : 1;
   if (shaken) { aim += (Math.random()-0.5)*0.5; power += (Math.random()-0.5)*0.24; }
-  G.armed = {A:{}, B:{}};                       // everything armed for this throw is spent
+  delete mine.double; delete mine.guide; delete theirs.shaky; delete theirs.sticky;   // spend only what applied to this throw
   aim = Math.max(-1, Math.min(1, aim)); power = Math.max(0, Math.min(1, power));
   const lx = aim * 1.18, ly = 0.3 + power * 0.85;
   let out = 'table', cup = null;
@@ -254,17 +257,18 @@ function doThrow(side, aim, power){
   G.id++;
   G.shot = {id:G.id, by:side, aim, power, lx: plink ? cup[0] : lx, ly: plink ? cup[1] : ly, out, cup, zone, zpos, res:null,
             spin: Math.random()*6, drift: plink ? (cup[0] > 0 ? -1 : 1) * (0.6 + Math.random()*0.8) : (Math.random()-0.5)*0.8,
-            mult, sticky, shaken};
+            mult, sticky, shaken,
+            fifaOnly: out === 'long' || (out === 'wide' && ly >= 0.5)};   // off the end, or wide past the side on their half: FIFA only
   G.phase = 'flight'; G.msg = ''; G.sub = '';
   commit();
   const id = G.id;
-  later(() => resolveFlight(id), FLIGHT + (out === 'table' || out === 'plink' ? BOUNCE : out === 'long' ? 0 : 400));
+  later(() => resolveFlight(id), FLIGHT + (out === 'table' || out === 'plink' ? BOUNCE : G.shot.fifaOnly ? 0 : 400));
 }
 
 function resolveFlight(id){
   if (!G || !G.shot || G.shot.id !== id || G.phase !== 'flight') return;
   const s = G.shot, t = s.by;
-  if (s.out === 'table' || s.out === 'plink' || s.out === 'long') {    // a long throw can still be FIFA'd
+  if (s.out === 'table' || s.out === 'plink' || s.fifaOnly) {    // long and wide throws can still be FIFA'd
     G.phase = 'catch'; commit();
     later(() => doCatch(other(t), 'drop', id), CATCH_MS + FALL_MS*1.4 + KICK_MS*1.3 + 5000);
     return;
@@ -286,9 +290,10 @@ function doCatch(side, res, id){
   res = res === true ? 'caught' : (res === 'caught' || res === 'fifa') ? res : 'drop';
   G.shot.res = res;
   const pl = G.shot.out === 'plink';
-  if (G.shot.out === 'long') {
-    if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked the long one up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
-    else finish('Long', 'Sailed off the end · no point', 'bad', id);
+  if (G.shot.fifaOnly) {
+    const lg = G.shot.out === 'long';
+    if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked the ' + (lg ? 'long' : 'wide') + ' one up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
+    else finish(lg ? 'Long' : 'Wide', lg ? 'Sailed off the end · no point' : 'Missed the table · no point', 'bad', id);
     return;
   }
   const mult = G.shot.mult || 1, dd = mult > 1 ? ' (Double Down)' : '';
@@ -330,7 +335,7 @@ function cpuTick(){
     }, 1500 + Math.random()*900);
   }
   if (G.phase === 'catch' && G.thrower === 'A') {
-    const id = G.shot.id, p = G.shot.out === 'long' ? 0 : Math.min(0.7, G.shot.zone * 1.8), r = Math.random();
+    const id = G.shot.id, p = G.shot.fifaOnly ? 0 : Math.min(0.7, G.shot.zone * 1.8), r = Math.random();
     if (r < p) later(() => doCatch('B', 'caught', id), CATCH_MS*(G.shot.zpos + G.shot.zone*0.5));
     else if (r < p + 0.1) later(() => doCatch('B', 'fifa', id), CATCH_MS + FALL_MS*0.8 + KICK_MS*0.6);
     else later(() => doCatch('B', 'drop', id), CATCH_MS + FALL_MS*1.3);
@@ -377,7 +382,7 @@ function onState(){
   if (G.phase !== 'aim') { stage = 0; swipe = null; }
   if (G.phase === 'catch' && s) {
     if (!V || V.id !== s.id) V = {id:s.id, t0:now, stop:null};
-    if (amDefender() && (!D || D.id !== s.id)) D = {id:s.id, stage: s.out === 'long' ? 'fall' : 'catch', t0:now, usedCatch:false, sent:false};
+    if (amDefender() && (!D || D.id !== s.id)) D = {id:s.id, stage: s.fifaOnly ? 'fall' : 'catch', t0:now, usedCatch:false, sent:false};
   }
   if (G.phase === 'result' && s && V && V.id === s.id && V.stop == null) V.stop = (now - V.t0) / CATCH_MS;
   cpuTick();
@@ -391,7 +396,7 @@ function catchPath(s, p){
 }
 const LONG_Z = -0.1;   // a long throw is still dropping when it passes the end of the table
 function fallPos(s, q){
-  const [cx, cy, cz] = s.out === 'long' ? [s.lx, s.ly, LONG_Z] : catchPath(s, 1), dr = s.drift || 0;
+  const [cx, cy, cz] = s.fifaOnly ? [s.lx, s.ly, LONG_Z] : catchPath(s, 1), dr = s.drift || 0;
   if (q <= 1) return [cx + dr*0.05*q, cy + 0.05*q, cz + (KICKZ - cz)*q*q];
   return [cx + dr*0.05, cy + 0.05, KICKZ + (FLOOR - KICKZ)*Math.min(1, (q-1)*2.5)];
 }
@@ -414,7 +419,7 @@ function obsPos(s, now){
   const p = (res && V.stop != null && res !== 'drop') ? V.stop : (now - V.t0) / CATCH_MS;
   if (res === 'caught') return catchPath(s, Math.min(1, V.stop ?? 0.5));
   if (res === 'fifa') return kickPos(fallPos(s, 0.8), 0.6);
-  if (s.out === 'long') { const q = (now - V.t0) / FALL_MS; return fallPos(s, res === 'drop' ? q : Math.min(1, q)); }
+  if (s.fifaOnly) { const q = (now - V.t0) / FALL_MS; return fallPos(s, res === 'drop' ? q : Math.min(1, q)); }
   if (p <= 1) return catchPath(s, p);
   const q = (p - 1) * CATCH_MS / FALL_MS;
   return fallPos(s, res === 'drop' ? q : Math.min(1, q));
@@ -428,7 +433,7 @@ function diePos(now){
   let ex = s.lx, ey = s.ly, ez = 0;
   if (s.out === 'plink' || s.out === 'sink') { ex = s.cup[0]; ey = s.cup[1]; ez = 0.1; }
   if (s.out === 'wide') ez = FLOOR;
-  if (s.out === 'long') ez = LONG_Z;
+  if (s.fifaOnly) ez = LONG_Z;
   if (e < FLIGHT) {
     const t = e / FLIGHT;
     x = sx + (ex-sx)*t; y = sy + (ey-sy)*t; z = sz + (ez-sz)*t + 4*peak*t*(1-t);
@@ -442,7 +447,7 @@ function diePos(now){
         [x, y, z] = (D && D.id === s.id) ? defPos(s, now) : obsPos(s, now);
         if ((D && D.id === s.id && D.stage === 'held') || (G.phase !== 'catch' && s.res !== 'drop' && !(D && D.id === s.id))) spin = s.spin;
       }
-    } else if (s.out === 'long') {
+    } else if (s.fifaOnly) {
       [x, y, z] = G.phase === 'flight' ? [ex, ey, ez] : (D && D.id === s.id) ? defPos(s, now) : obsPos(s, now);
       if (D && D.id === s.id && D.stage === 'held') spin = s.spin;
     } else if (s.out === 'sink') { x = ex; y = ey; z = 0.05; gone = e2 > 90; }
@@ -597,7 +602,7 @@ function renderTray(){
     if (!PU[k]) return;
     const b = document.createElement('button'); b.className = 'pu'; b.disabled = !canUse(mySide, k);
     const n = document.createElement('b'); n.textContent = PU[k].name;
-    const d = document.createElement('span'); d.textContent = PU[k].desc + (b.disabled ? (PU[k].when === 'throw' ? ' · on your throw' : ' · on their throw') : '');
+    const d = document.createElement('span'); d.textContent = PU[k].desc + (b.disabled ? (PU[k].when === 'throw' ? ' · on your throw' : ' · after this throw') : '');
     b.append(n, d); b.addEventListener('click', () => act('use', {kind: k}));
     tray.appendChild(b);
   });
