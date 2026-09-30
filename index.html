@@ -199,7 +199,7 @@ const PU = {
 };
 const PU_KEYS = Object.keys(PU);
 function newGame(names, bPeer){
-  return {id:0, phase:'aim', thrower: Math.random()<.5?'A':'B', score:{A:0,B:0},
+  return {id: Math.floor(Math.random()*9e6)*100, phase:'aim', thrower: Math.random()<.5?'A':'B', score:{A:0,B:0},
           target:TARGET, shot:null, msg:'', sub:'', tone:'', names, bPeer: bPeer||null, winner:null,
           pu:{A:[], B:[]}, armed:{A:{}, B:{}}, feed:null};
 }
