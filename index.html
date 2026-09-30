@@ -120,8 +120,8 @@ input::placeholder{color:#7d8280}
         <dt>Drop</dt><dd>Lands on their half and they don't catch it: +1.</dd>
         <dt>Catch</dt><dd>Tap the die while its ring is green.</dd>
         <dt>FIFA</dt><dd>Only when the die goes off the table untouched: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
-        <dt>Plink</dt><dd>Hit a cup: +1.</dd>
-        <dt>Sink</dt><dd>In the cup: +3. First to 7 wins.</dd>
+        <dt>Plink</dt><dd>Off the side of a cup: +1, unless they catch it. It comes off fast, so it’s much harder to catch.</dd>
+        <dt>Plop</dt><dd>In the cup: +3. First to 7 wins.</dd>
       </dl>
     </div>
   </div>
@@ -204,21 +204,22 @@ function doThrow(side, aim, power){
   }
   // deeper landings give a shorter catch window
   const depth = Math.max(0, Math.min(1, (ly - 0.55) / 0.45));
-  const zone = 0.36 - depth * 0.14;
-  const zpos = 0.25 + Math.random() * (0.9 - 0.25 - zone);
+  const plink = out === 'plink';
+  const zone = plink ? 0.1 : 0.36 - depth * 0.14;               // a plink comes off the cup fast and wild
+  const zpos = plink ? 0.3 + Math.random() * 0.4 : 0.25 + Math.random() * (0.9 - 0.25 - zone);
   G.id++;
-  G.shot = {id:G.id, by:side, aim, power, lx, ly, out, cup, zone, zpos, res:null,
-            spin: Math.random()*6, drift:(Math.random()-0.5)*0.8};
+  G.shot = {id:G.id, by:side, aim, power, lx: plink ? cup[0] : lx, ly: plink ? cup[1] : ly, out, cup, zone, zpos, res:null,
+            spin: Math.random()*6, drift: plink ? (cup[0] > 0 ? -1 : 1) * (0.6 + Math.random()*0.8) : (Math.random()-0.5)*0.8};
   G.phase = 'flight'; G.msg = ''; G.sub = '';
   commit();
   const id = G.id;
-  later(() => resolveFlight(id), FLIGHT + (out === 'table' ? BOUNCE : 400));
+  later(() => resolveFlight(id), FLIGHT + (out === 'table' || out === 'plink' ? BOUNCE : 400));
 }
 
 function resolveFlight(id){
   if (!G || !G.shot || G.shot.id !== id || G.phase !== 'flight') return;
   const s = G.shot, t = s.by;
-  if (s.out === 'table') {
+  if (s.out === 'table' || s.out === 'plink') {
     G.phase = 'catch'; commit();
     later(() => doCatch(other(t), 'drop', id), CATCH_MS + FALL_MS*1.4 + KICK_MS*1.3 + 5000);
     return;
@@ -227,8 +228,7 @@ function resolveFlight(id){
     short:['Short','Landed on the thrower’s own half · no point','bad',0],
     long:['Long','Sailed off the end · no point','bad',0],
     wide:['Wide','Missed the table · no point','bad',0],
-    plink:['Plink','Rang the cup · +1','good',1],
-    sink:['Sink','Straight in the cup · +3','great',3]
+    sink:['Plop','Straight in the cup · +3','great',3]
   }[s.out];
   G.score[t] += M[3];
   finish(M[0], M[1], M[2], id);
@@ -238,9 +238,10 @@ function doCatch(side, res, id){
   if (!G || G.phase !== 'catch' || !G.shot || G.shot.id !== id || side === G.thrower) return;
   res = res === true ? 'caught' : (res === 'caught' || res === 'fifa') ? res : 'drop';
   G.shot.res = res;
-  if (res === 'caught') finish('Caught', 'One hand, clean · no point', 'bad', id);
+  const pl = G.shot.out === 'plink';
+  if (res === 'caught') finish('Caught', pl ? 'Saved a plink · no point' : 'One hand, clean · no point', 'bad', id);
   else if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked it up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
-  else { G.score[G.thrower] += 1; finish('Dropped', 'Hit the table, not caught · +1', 'good', id); }
+  else { G.score[G.thrower] += 1; finish(pl ? 'Plink' : 'Dropped', pl ? 'Rang the cup and got away · +1' : 'Hit the table, not caught · +1', 'good', id); }
 }
 
 function finish(msg, sub, tone, id){
@@ -370,16 +371,14 @@ function diePos(now){
     x = sx + (ex-sx)*t; y = sy + (ey-sy)*t; z = sz + (ez-sz)*t + 4*peak*t*(1-t);
   } else {
     const e2 = e - FLIGHT;
-    if (s.out === 'table') {
-      const t = Math.min(1, e2 / BOUNCE);
-      x = s.lx*(1 + 0.05*t); y = s.ly + (1.0 - s.ly)*t; z = 0.1*t + 0.25*4*t*(1-t);
+    if (s.out === 'table' || s.out === 'plink') {
+      const t = Math.min(1, e2 / BOUNCE), pl = s.out === 'plink';
+      x = s.lx*(1 + 0.05*t) + (pl ? (s.drift||0)*0.15*t : 0); y = s.ly + (1.0 - s.ly)*t;
+      z = (pl ? 0.1*(1-t) : 0) + 0.1*t + (pl ? 0.45 : 0.25)*4*t*(1-t);
       if (G.phase !== 'flight') {
         [x, y, z] = (D && D.id === s.id) ? defPos(s, now) : obsPos(s, now);
         if ((D && D.id === s.id && D.stage === 'held') || (G.phase !== 'catch' && s.res !== 'drop' && !(D && D.id === s.id))) spin = s.spin;
       }
-    } else if (s.out === 'plink') {
-      const t = Math.min(1, e2/650);
-      x = ex + (ex>0?1:-1)*0.4*t; y = ey + 0.1*t; z = Math.max(FLOOR, 0.1 + 0.9*t*(1-t) - t*0.9);
     } else if (s.out === 'sink') { x = ex; y = ey; z = 0.05; gone = e2 > 90; }
     else if (s.out === 'short') { x = ex; y = ey; z = 0; rest = true; }
     else { x = ex*(1+Math.min(1,e2/400)*0.08); y = ey + (s.out==='long' ? Math.min(1,e2/400)*0.08 : 0); z = FLOOR; rest = true; }
@@ -581,7 +580,7 @@ function drawBoard(g, w, h){
   g.fillStyle='rgba(240,238,228,.9)'; g.textAlign='left';
   g.font='600 64px Caveat, cursive'; g.fillText('House Rules', 44, 96);
   g.font='600 42px Caveat, cursive';
-  ['Drop ........ 1','Plink ....... 1','Sink ......... 3','FIFA ......... 1','Game to 7','No re-throws'].forEach((t,i)=> g.fillText(t, 52, 170 + i*56));
+  ['Drop ........ 1','Plink ....... 1','Plop ......... 3','FIFA ......... 1','Game to 7','No re-throws'].forEach((t,i)=> g.fillText(t, 52, 170 + i*56));
 }
 boardTex = canvasTex(512, 520, drawBoard);
 if (document.fonts && document.fonts.load) document.fonts.load('600 40px Caveat').then(() => { const c = boardTex.image; drawBoard(c.getContext('2d'), c.width, c.height); boardTex.needsUpdate = true; }).catch(()=>{});
