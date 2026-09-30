@@ -119,6 +119,21 @@ input::placeholder{color:#7d8280}
 .quick{display:flex;flex-wrap:wrap;gap:6px}
 .quick button{background:transparent;border:1px solid var(--line);color:var(--text);padding:6px 10px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:500}
 
+/* accounts */
+.auth{position:fixed;inset:0;z-index:15;overflow:auto;display:grid;place-items:center;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 24px) 24px;box-sizing:border-box;background:linear-gradient(180deg, rgba(10,11,12,.35), rgba(10,11,12,.7))}
+.auth-card{width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;background:rgba(20,22,25,.72);border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:22px 20px;box-shadow:0 20px 50px rgba(0,0,0,.4);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.auth-card .tag{margin:0;font-size:15px}
+.auth-form{display:flex;flex-direction:column;gap:8px}
+.auth-form .btn-main{margin-top:6px;background:var(--gold);color:#1a1206}
+.auth-err{color:#ff8f86;font-size:13px;margin:0;min-height:0}
+.auth-err:empty{display:none}
+.linkbtn{background:none;border:0;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500;font-size:13px;padding:4px;align-self:center;text-decoration:underline;text-underline-offset:3px}
+.linkbtn:hover{color:var(--text)}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.2em}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.acct{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.acct .linkbtn{padding:0;font-size:12px}
+
 /* HUD */
 .hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;gap:8px;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 12px) calc(env(safe-area-inset-bottom,0px) + 14px);box-sizing:border-box}
 .bug{align-self:center;display:grid;grid-template-columns:auto auto auto;align-items:stretch;background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:4px;overflow:hidden;max-width:100%}
@@ -169,7 +184,8 @@ input::placeholder{color:#7d8280}
     <header class="top">
       <h1 class="brand">Beer <span>Die</span></h1>
       <div class="me"><label class="lbl" for="nameIn">Your name</label><input id="nameIn" maxlength="16" placeholder="e.g. King" autocomplete="off">
-        <div class="lvlrow"><b id="lvl">Lv 1</b><div class="xpbar"><i id="xpfill"></i></div><span id="xptext">0 / 150 XP</span></div></div>
+        <div class="lvlrow"><b id="lvl">Lv 1</b><div class="xpbar"><i id="xpfill"></i></div><span id="xptext">0 / 150 XP</span></div>
+        <div class="acct" id="acct" hidden><span id="acctText"></span><button class="linkbtn" id="acctBtn" type="button"></button></div></div>
     </header>
     <div class="hero" aria-hidden="true"></div>
 
@@ -244,6 +260,31 @@ input::placeholder{color:#7d8280}
   </div>
 </section>
 
+<section class="auth" id="auth" hidden>
+  <div class="auth-card">
+    <h1 class="brand">Beer <span>Die</span></h1>
+    <p class="tag">Sign in to keep your level, arenas and tables on every device.</p>
+    <nav class="tabs auth-tabs">
+      <button class="tab" type="button" aria-selected="true" data-mode="in">Sign in</button>
+      <button class="tab" type="button" aria-selected="false" data-mode="up">Create account</button>
+    </nav>
+    <form id="authForm" class="auth-form" novalidate>
+      <label class="lbl" for="authName" id="authNameLbl" hidden>Player name</label>
+      <input id="authName" maxlength="16" placeholder="What people see" autocomplete="nickname" hidden>
+      <label class="lbl" for="authEmail">Email</label>
+      <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email">
+      <label class="lbl" for="authPass">Password</label>
+      <input id="authPass" type="password" placeholder="At least 6 characters" autocomplete="current-password">
+      <p class="auth-err" id="authErr" role="alert"></p>
+      <button class="btn-main" id="authGo" type="submit">Sign in</button>
+      <button class="linkbtn" id="authForgot" type="button">Forgot password?</button>
+    </form>
+    <div class="or"><span>or</span></div>
+    <button class="btn-sec" id="authGoogle" type="button">Continue with Google</button>
+    <button class="linkbtn" id="authGuest" type="button">Play as guest (progress stays on this phone)</button>
+  </div>
+</section>
+
 <section class="hud" id="hud" hidden>
   <div class="bug">
     <div class="team" id="sideMe"><span class="nm" id="nmMe">You</span><span class="sc" id="scMe">0</span></div>
@@ -269,6 +310,10 @@ input::placeholder{color:#7d8280}
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script>
 (() => {
@@ -285,7 +330,9 @@ $('nameIn').addEventListener('input', () => {
   myName = $('nameIn').value.trim().slice(0,16);
   try { localStorage.setItem('bd-name', myName); } catch(e){}
   if (lobbyRoom) lobbyRoom.presence({name: nameOr()}).catch(()=>{});
+  clearTimeout(nameSaveT); nameSaveT = setTimeout(() => { if (typeof cloudSave === 'function') cloudSave(); }, 1200);
 });
+let nameSaveT = null;
 // keep slurs out of names and chat
 const BAD = [/n+[i1!|]+[gq]{2,}(?:[e3]+r+|[a@]+h?|u+h+)?[sz]?/gi, /f+[a@4]+g+(?:[o0]+t+)?s?/gi, /\br+[e3]+t+[a@4]+r+d+(?:s|ed)?\b/gi, /\bk+[i1y]+k+[e3]+s?\b/gi, /\bc+h+[i1]+n+k+s?\b/gi, /\bs+p+[i1]+c+s?\b/gi, /\bt+r+[a@4]+n+n+(?:y|ie)s?\b/gi, /\bc+[o0]+[o0]+n+s?\b/gi, /\bw+[e3]+t+b+[a@4]+c+k+s?\b/gi];
 function clean(t){ t = String(t == null ? '' : t).replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff]/g, '').slice(0, 120); BAD.forEach(r => { t = t.replace(r, m => '*'.repeat(m.length)); }); return t; }
@@ -1236,7 +1283,7 @@ function renderTables(){
   TABLES.forEach(t => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'arena' + (t.key === tableKey ? ' on' : ''); b.setAttribute('aria-pressed', String(t.key === tableKey));
     const n = document.createElement('b'); n.textContent = t.name; const d = document.createElement('span'); d.textContent = t.desc;
-    b.append(n, d); b.addEventListener('click', () => { tableKey = t.key; try { localStorage.setItem('bd-table', tableKey); } catch(e){} applyTable(tableKey); renderTables(); });
+    b.append(n, d); b.addEventListener('click', () => { tableKey = t.key; try { localStorage.setItem('bd-table', tableKey); } catch(e){} applyTable(tableKey); renderTables(); cloudSave(); });
     box.appendChild(b);
   });
 }
@@ -1276,7 +1323,7 @@ function renderLevel(){
     const ok = lv >= a.lvl, b = document.createElement('button'); b.type = 'button'; b.className = 'arena' + (a.key === arenaKey ? ' on' : ''); b.disabled = !ok;
     b.setAttribute('aria-pressed', String(a.key === arenaKey));
     const n = document.createElement('b'); n.textContent = a.name; const d = document.createElement('span'); d.textContent = ok ? a.desc : 'Unlocks at level ' + a.lvl;
-    b.append(n, d); b.addEventListener('click', () => { arenaKey = a.key; try { localStorage.setItem('bd-arena', arenaKey); } catch(e){} applyArena(arenaKey); renderLevel(); });
+    b.append(n, d); b.addEventListener('click', () => { arenaKey = a.key; try { localStorage.setItem('bd-arena', arenaKey); } catch(e){} applyArena(arenaKey); renderLevel(); cloudSave(); });
     box.appendChild(b);
   });
   const next = ARENAS.find(a => a.lvl > lv); $('arenaHint').textContent = next ? 'Next: ' + next.name + ' at level ' + next.lvl : 'All arenas unlocked';
@@ -1296,6 +1343,7 @@ function awardXP(){
   }
   if (lobbyRoom) lobbyRoom.presence({lvl: after}).catch(()=>{});
   renderLevel();
+  cloudSave();
 }
 
 // ---------- camera ----------
@@ -1705,6 +1753,112 @@ function onLobbyPeers(peers){
   const me = peers.find(p => p.sameTab); if (me) lobbyMe = me.peer;
   renderGames(peers); renderOnline(peers); ingestChat('lobby', peers); checkChallenges(peers);
 }
+
+// ---------- accounts: Firebase sign-in keeps level, arena, table and name in the cloud ----------
+let fbAuth = null, fbDb = null, fbUser = null, cloudReady = false, saveT = null;
+const AUTH_MSG = {
+  'auth/invalid-email': 'That email doesn’t look right.',
+  'auth/missing-password': 'Enter your password.',
+  'auth/weak-password': 'Use at least 6 characters for your password.',
+  'auth/email-already-in-use': 'There’s already an account with that email. Sign in instead.',
+  'auth/invalid-credential': 'Email or password is wrong.',
+  'auth/wrong-password': 'Email or password is wrong.',
+  'auth/user-not-found': 'No account with that email. Create one instead.',
+  'auth/too-many-requests': 'Too many tries. Wait a minute and try again.',
+  'auth/popup-closed-by-user': 'Google sign-in was closed before it finished.',
+  'auth/network-request-failed': 'Couldn’t reach the sign-in server. Check your connection.',
+  'auth/unauthorized-domain': 'This website isn’t on the Firebase authorized domains list yet.',
+};
+function cloudSave(){
+  if (!fbUser || !fbDb || !cloudReady) return;
+  clearTimeout(saveT);
+  saveT = setTimeout(() => {
+    fbDb.collection('users').doc(fbUser.uid).set({
+      name: nameOr(), xp: prog.xp | 0, arena: arenaKey, table: tableKey,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, {merge: true}).catch(e => console.warn('save failed', e));
+  }, 400);
+}
+function renderAcct(){
+  const el = $('acct'); if (!fbAuth) { el.hidden = true; return; }
+  el.hidden = false;
+  $('acctText').textContent = fbUser ? 'Signed in' + (fbUser.email ? ' as ' + fbUser.email : '') + ' · progress saved' : 'Guest · progress only on this phone';
+  $('acctBtn').textContent = fbUser ? 'Sign out' : 'Sign in';
+}
+function showAuth(on){ $('auth').hidden = !on; if (!mode) $('lobby').hidden = !!on; if (on) { $('authErr').textContent = ''; } }
+let authMode = 'in';
+document.querySelectorAll('.auth-tabs .tab').forEach(t => t.addEventListener('click', () => {
+  authMode = t.dataset.mode;
+  document.querySelectorAll('.auth-tabs .tab').forEach(x => x.setAttribute('aria-selected', String(x === t)));
+  const up = authMode === 'up';
+  $('authName').hidden = $('authNameLbl').hidden = !up; $('authForgot').hidden = up;
+  $('authGo').textContent = up ? 'Create account' : 'Sign in';
+  $('authPass').autocomplete = up ? 'new-password' : 'current-password';
+  $('authErr').textContent = '';
+}));
+async function loadProfile(user){
+  cloudReady = false;
+  try {
+    const ref = fbDb.collection('users').doc(user.uid), snap = await ref.get(), d = snap.exists ? snap.data() : {};
+    // keep whichever progress is further along, so guest games before signing up aren't lost
+    prog.xp = Math.max(prog.xp | 0, d.xp | 0); try { localStorage.setItem('bd-prog', JSON.stringify(prog)); } catch(e){}
+    const nm = clean(d.name || pendingName || user.displayName || myName || '').slice(0,16);
+    if (nm) { myName = nm; $('nameIn').value = nm; try { localStorage.setItem('bd-name', nm); } catch(e){} }
+    if (d.arena && ARENAS.some(a => a.key === d.arena) && unlocked(d.arena)) arenaKey = d.arena;
+    if (d.table && TABLES.some(t => t.key === d.table)) tableKey = d.table;
+    try { localStorage.setItem('bd-arena', arenaKey); localStorage.setItem('bd-table', tableKey); } catch(e){}
+    if (!mode) { applyArena(arenaKey); applyTable(tableKey); }
+    renderLevel(); renderTables();
+    if (lobbyRoom) lobbyRoom.presence({name: nameOr(), lvl: myLevel()}).catch(()=>{});
+  } catch(e) { console.warn('profile load failed', e); }
+  cloudReady = true; pendingName = ''; cloudSave();
+}
+let pendingName = '';
+$('authForm').addEventListener('submit', async e => {
+  e.preventDefault(); if (!fbAuth) return;
+  const email = $('authEmail').value.trim(), pass = $('authPass').value;
+  $('authErr').textContent = ''; $('authGo').disabled = true;
+  try {
+    if (authMode === 'up') {
+      const nm = clean($('authName').value.trim()).slice(0,16);
+      if (!nm) { $('authErr').textContent = 'Pick a player name.'; return; }
+      pendingName = nm;
+      const cred = await fbAuth.createUserWithEmailAndPassword(email, pass);
+      await cred.user.updateProfile({displayName: nm}).catch(()=>{});
+    } else await fbAuth.signInWithEmailAndPassword(email, pass);
+  } catch(err) { $('authErr').textContent = AUTH_MSG[err.code] || 'Something went wrong. Try again.'; }
+  finally { $('authGo').disabled = false; }
+});
+$('authGoogle').addEventListener('click', async () => {
+  if (!fbAuth) return; $('authErr').textContent = '';
+  try { await fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+  catch(err) { $('authErr').textContent = AUTH_MSG[err.code] || 'Google sign-in didn’t work. Try email instead.'; }
+});
+$('authForgot').addEventListener('click', async () => {
+  const email = $('authEmail').value.trim();
+  if (!email) { $('authErr').textContent = 'Type your email above, then tap Forgot password.'; return; }
+  try { await fbAuth.sendPasswordResetEmail(email); $('authErr').textContent = 'Reset link sent to ' + email + '.'; }
+  catch(err) { $('authErr').textContent = AUTH_MSG[err.code] || 'Couldn’t send the reset email.'; }
+});
+$('authGuest').addEventListener('click', () => { try { localStorage.setItem('bd-guest', '1'); } catch(e){} showAuth(false); });
+$('acctBtn').addEventListener('click', () => { if (!fbAuth) return; if (fbUser) fbAuth.signOut(); else showAuth(true); });
+(function bootAuth(){
+  const cfg = window.BEERDIE_FIREBASE;
+  if (!cfg || !window.firebase || !firebase.initializeApp) { renderAcct(); return; }   // accounts not set up yet: play as before
+  try {
+    firebase.initializeApp(cfg);
+    fbAuth = firebase.auth(); fbDb = firebase.firestore();
+    fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+  } catch(e) { console.warn('firebase init failed', e); fbAuth = null; renderAcct(); return; }
+  let first = true;
+  fbAuth.onAuthStateChanged(user => {
+    fbUser = user || null; renderAcct();
+    if (user) { showAuth(false); loadProfile(user); }
+    else { cloudReady = false; let guest = false; try { guest = localStorage.getItem('bd-guest') === '1'; } catch(e){} showAuth(!(first && guest)); }
+    first = false;
+  });
+})();
+
 // ---------- live play over a public MQTT relay (works phone to phone, any network) ----------
 const BROKER = (new URLSearchParams(location.search).get('broker')) || 'wss://broker.hivemq.com:8884/mqtt';
 const PREFIX = 'beerdie-mg26-v1';
