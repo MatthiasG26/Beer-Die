@@ -1313,20 +1313,21 @@ const levelOf = xp => 1 + Math.floor(xp / XP_PER);
 const myLevel = () => levelOf(prog.xp);
 let arenaKey = 'basement';
 try { const a = localStorage.getItem('bd-arena'); if (a) arenaKey = a; } catch(e){}
-const unlocked = key => { const a = ARENAS.find(a => a.key === key); return !!a && myLevel() >= a.lvl; };
+let ownerMode = false;   // the game's owner gets every arena without grinding levels
+const unlocked = key => { const a = ARENAS.find(a => a.key === key); return !!a && (ownerMode || myLevel() >= a.lvl); };
 if (!unlocked(arenaKey)) arenaKey = 'basement';
 function renderLevel(){
   const lv = myLevel(), into = prog.xp % XP_PER;
   $('lvl').textContent = 'Lv ' + lv; $('xpfill').style.width = (into / XP_PER * 100) + '%'; $('xptext').textContent = into + ' / ' + XP_PER + ' XP';
   const box = $('arenas'); box.innerHTML = '';
   ARENAS.forEach(a => {
-    const ok = lv >= a.lvl, b = document.createElement('button'); b.type = 'button'; b.className = 'arena' + (a.key === arenaKey ? ' on' : ''); b.disabled = !ok;
+    const ok = unlocked(a.key), b = document.createElement('button'); b.type = 'button'; b.className = 'arena' + (a.key === arenaKey ? ' on' : ''); b.disabled = !ok;
     b.setAttribute('aria-pressed', String(a.key === arenaKey));
     const n = document.createElement('b'); n.textContent = a.name; const d = document.createElement('span'); d.textContent = ok ? a.desc : 'Unlocks at level ' + a.lvl;
     b.append(n, d); b.addEventListener('click', () => { arenaKey = a.key; try { localStorage.setItem('bd-arena', arenaKey); } catch(e){} applyArena(arenaKey); renderLevel(); cloudSave(); });
     box.appendChild(b);
   });
-  const next = ARENAS.find(a => a.lvl > lv); $('arenaHint').textContent = next ? 'Next: ' + next.name + ' at level ' + next.lvl : 'All arenas unlocked';
+  const next = ownerMode ? null : ARENAS.find(a => a.lvl > lv); $('arenaHint').textContent = next ? 'Next: ' + next.name + ' at level ' + next.lvl : 'All arenas unlocked';
 }
 let awardedFor = null, lastGain = null;
 function awardXP(){
@@ -1796,8 +1797,19 @@ document.querySelectorAll('.auth-tabs .tab').forEach(t => t.addEventListener('cl
   $('authPass').autocomplete = up ? 'new-password' : 'current-password';
   $('authErr').textContent = '';
 }));
+// owner accounts are matched by a SHA-256 of the email, so no address sits in the public source
+const OWNER_HASHES = ['b560d502edcfb2353a945cf80a79331c908833ce629010757827c99e476368b5'];
+async function checkOwner(user){
+  try {
+    const email = String(user && user.email || '').trim().toLowerCase(); if (!email || !crypto.subtle) return false;
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(email));
+    const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    return OWNER_HASHES.includes(hex);
+  } catch(e) { return false; }
+}
 async function loadProfile(user){
   cloudReady = false;
+  ownerMode = await checkOwner(user);
   try {
     const ref = fbDb.collection('users').doc(user.uid), snap = await ref.get(), d = snap.exists ? snap.data() : {};
     // keep whichever progress is further along, so guest games before signing up aren't lost
@@ -1854,7 +1866,7 @@ $('acctBtn').addEventListener('click', () => { if (!fbAuth) return; if (fbUser) 
   fbAuth.onAuthStateChanged(user => {
     fbUser = user || null; renderAcct();
     if (user) { showAuth(false); loadProfile(user); }
-    else { cloudReady = false; let guest = false; try { guest = localStorage.getItem('bd-guest') === '1'; } catch(e){} showAuth(!(first && guest)); }
+    else { cloudReady = false; ownerMode = false; if (!unlocked(arenaKey)) { arenaKey = 'basement'; if (!mode) applyArena(arenaKey); } renderLevel(); let guest = false; try { guest = localStorage.getItem('bd-guest') === '1'; } catch(e){} showAuth(!(first && guest)); }
     first = false;
   });
 })();
