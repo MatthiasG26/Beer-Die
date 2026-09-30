@@ -22,7 +22,10 @@ html,body{height:100%;margin:0}
 body{background:var(--ink);color:var(--text);font-family:var(--ui);font-size:15px;overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 #gl,#ov{position:fixed;inset:0;width:100%;height:100%;display:block}
 #ov{touch-action:none}
-.shade{position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%)}
+.shade{position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);transition:box-shadow .3s}
+.shade.shaken{box-shadow:inset 0 0 90px 10px rgba(217,54,44,.55);animation:pulse 0.9s ease-in-out infinite alternate}
+@keyframes pulse{from{opacity:.75}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.shade.shaken{animation:none}}
 button{font-family:var(--ui);font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:0;border-radius:4px}
 button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 input{font:500 17px var(--ui);background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:11px 12px;box-sizing:border-box;width:100%;min-width:0}
@@ -61,7 +64,7 @@ input::placeholder{color:#7d8280}
 .note{font-size:13px;color:var(--muted);margin:0;line-height:1.45}
 
 /* HUD */
-.hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 12px) calc(env(safe-area-inset-bottom,0px) + 14px);box-sizing:border-box}
+.hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;gap:8px;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 12px) calc(env(safe-area-inset-bottom,0px) + 14px);box-sizing:border-box}
 .bug{align-self:center;display:grid;grid-template-columns:auto auto auto;align-items:stretch;background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:4px;overflow:hidden;max-width:100%}
 .team{display:flex;align-items:center;gap:12px;padding:6px 14px;min-width:0}
 .team .nm{font:600 13px var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);max-width:26vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -72,20 +75,20 @@ input::placeholder{color:#7d8280}
 .banner{position:fixed;left:50%;top:22%;transform:translateX(-50%);text-align:center;width:92%;pointer-events:none}
 .banner .big{display:block;font:900 clamp(48px,12vw,96px)/.9 var(--display);text-transform:uppercase;letter-spacing:.01em;text-shadow:0 2px 24px rgba(0,0,0,.55)}
 .banner .sub{display:inline-block;margin-top:10px;font:500 15px var(--ui);letter-spacing:.06em;color:var(--text);background:var(--glass);padding:6px 12px;border-radius:3px}
-.foot{display:flex;flex-direction:column;align-items:center;gap:10px}
+.foot{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:auto}
 .status{font:500 15px var(--ui);color:var(--text);text-align:center;margin:0;max-width:38ch;text-shadow:0 1px 8px rgba(0,0,0,.8);min-height:20px}
 .controls{display:flex;gap:8px;pointer-events:auto}
 .leave{background:var(--glass);border:1px solid var(--line);color:var(--muted);padding:10px 14px;font-size:12px}
 .act{background:var(--text);color:var(--ink);font-size:15px;padding:11px 26px}
 .tray{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;pointer-events:auto;max-width:100%}
-.pu{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:var(--glass-2);border:1px solid rgba(232,176,74,.55);color:var(--text);padding:7px 11px;border-radius:4px;text-transform:none;letter-spacing:0;text-align:left;font-weight:500}
+.pu{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:var(--glass-2);border:1px solid rgba(232,176,74,.55);color:var(--text);padding:5px 10px;border-radius:4px;text-transform:none;letter-spacing:0;text-align:left;font-weight:500}
 .pu b{font:800 15px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
 .pu span{font-size:11px;color:var(--muted)}
 .pu:disabled{opacity:.45;cursor:default;border-color:var(--line)}
 .pu.armed{border-color:var(--good);opacity:1}
 .pu.armed b{color:var(--good)}
 .tray-note{font:500 12px var(--ui);color:var(--muted);align-self:center}
-.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);transform:translateX(-50%);background:var(--glass-2);border:1px solid rgba(232,176,74,.6);color:var(--text);font:500 14px var(--ui);padding:8px 14px;border-radius:4px;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 140px);transform:translateX(-50%);background:var(--glass-2);border:1px solid rgba(232,176,74,.6);color:var(--text);font:500 14px var(--ui);padding:8px 14px;border-radius:4px;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
 .toast b{color:var(--gold);font-weight:600}
 .loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--muted);font:500 14px var(--ui);letter-spacing:.1em;text-transform:uppercase;pointer-events:none}
 </style>
@@ -94,7 +97,7 @@ input::placeholder{color:#7d8280}
 
 <canvas id="gl"></canvas>
 <canvas id="ov"></canvas>
-<div class="shade"></div>
+<div class="shade" id="shade"></div>
 <div class="loading" id="loading">Setting up the table…</div>
 
 <section class="lobby" id="lobby">
@@ -114,6 +117,8 @@ input::placeholder{color:#7d8280}
       <p class="lbl">Play</p>
       <div class="opts">
         <div class="seg" id="targetSeg"><span class="lbl">Game to</span><button type="button" data-v="7">7</button><button type="button" data-v="11">11</button></div>
+        <div class="seg" id="fmtSeg"><span class="lbl">Mode</span><button type="button" data-v="1v1">1v1</button><button type="button" data-v="2v2">2v2</button></div>
+        <div class="seg" id="visSeg"><span class="lbl">Lobby</span><button type="button" data-v="public">Public</button><button type="button" data-v="private">Private</button></div>
         <div class="seg" id="diffSeg"><span class="lbl">CPU</span><button type="button" data-v="easy">Easy</button><button type="button" data-v="medium">Medium</button><button type="button" data-v="hard">Hard</button></div>
       </div>
       <div class="row">
@@ -141,6 +146,7 @@ input::placeholder{color:#7d8280}
         <dt>FIFA</dt><dd>Only when the die goes off the table untouched, including a throw that goes long or wide on your half: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
         <dt>Plink</dt><dd>Off the side of a cup: +2 if they drop it, nothing if they catch it. It comes off fast, so it’s much harder to catch.</dd>
         <dt>Plop</dt><dd>In the cup: +3. First to 7 or 11 wins, you pick.</dd>
+        <dt>Modes</dt><dd>Host a 1v1 or 2v2 game, public (listed under Open games) or private (code only). In 2v2 teammates take turns throwing and either one can catch.</dd>
         <dt>Power-ups</dt><dd>Earn one for every Plop (hold up to 2). Aim Guide and Double Down are used on your throw. Sticky Hands and Shaky Hands can be used any time and hit their next throw.</dd>
       </dl>
     </div>
@@ -153,10 +159,10 @@ input::placeholder{color:#7d8280}
     <div class="mid" id="toLbl">First to 7</div>
     <div class="team" id="sideOpp"><span class="sc" id="scOpp">0</span><span class="nm" id="nmOpp">Opponent</span></div>
   </div>
+  <div class="tray" id="tray"></div>
   <div class="banner" id="banner"></div>
   <div class="toast" id="toast" hidden></div>
   <div class="foot">
-    <div class="tray" id="tray"></div>
     <p class="status" id="status"></p>
     <div class="controls">
       <button class="leave" id="leaveBtn">Leave</button>
@@ -207,12 +213,19 @@ const PU = {
   shaky:  {name:'Shaky Hands',  when:'defend', desc:'Their next throw wobbles'},
 };
 const PU_KEYS = Object.keys(PU);
-function newGame(names, bPeer, target){
+// seats: {A:[{id,name}], B:[{id,name}]} — one player a side for 1v1, two for 2v2; teammates take turns throwing
+function newGame(seats, target, fmt){
   target = target === 11 ? 11 : 7;
-  return {id: Math.floor(Math.random()*9e6)*100, phase:'aim', thrower: Math.random()<.5?'A':'B', score:{A:0,B:0},
-          target, shot:null, msg:'', sub:'', tone:'', names, bPeer: bPeer||null, winner:null,
+  const thrower = Math.random() < .5 ? 'A' : 'B';
+  const names = {A: seats.A.map(p => p.name).join(' & '), B: seats.B.map(p => p.name).join(' & ')};
+  return {id: Math.floor(Math.random()*9e6)*100, phase:'aim', thrower, throwerId: seats[thrower][0].id,
+          tIdx: {A: thrower === 'A' ? 1 : 0, B: thrower === 'B' ? 1 : 0}, drops: [],
+          score:{A:0,B:0}, target, fmt: fmt === '2v2' ? '2v2' : '1v1', seats, shot:null, msg:'', sub:'', tone:'', names, winner:null,
           pu:{A:[], B:[]}, armed:{A:{}, B:{}}, feed:null};
 }
+let myId = 'me';                     // this phone's seat id: 'me' vs the CPU, 'host' when hosting, the room peer id when joining
+function teamOf(id){ if (!G || !G.seats) return null; for (const t of ['A','B']) if (G.seats[t].some(p => p.id === id)) return t; return null; }
+function seatName(id){ if (!G || !G.seats) return ''; for (const t of ['A','B']) { const p = G.seats[t].find(p => p.id === id); if (p) return p.name; } return ''; }
 function feed(side, text){ G.feed = {n: (G.feed ? G.feed.n : 0) + 1, side, text}; }
 function award(side){
   if (G.pu[side].length >= 2) return;
@@ -243,8 +256,9 @@ function commit(){
 function mulberry32(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const newSeed = () => (Math.random() * 4294967296) >>> 0;
 let pendingThrow = null;   // guest: a throw shown locally, waiting for the host to confirm it
-function doThrow(side, aim, power, seed, predict){
+function doThrow(side, aim, power, seed, predict, byId){
   if (!G || G.phase !== 'aim' || G.thrower !== side) return;
+  if (byId !== undefined && byId !== G.throwerId) return;   // only the teammate whose turn it is can throw
   const R = mulberry32((+seed >>> 0) || newSeed());
   aim = +aim||0; power = +power||0;
   const mine = G.armed[side], theirs = G.armed[other(side)];
@@ -286,7 +300,7 @@ function resolveFlight(id){
   const s = G.shot, t = s.by;
   if (s.out === 'table' || s.out === 'plink' || s.fifaOnly) {    // long and wide throws can still be FIFA'd
     G.phase = 'catch'; commit();
-    later(() => doCatch(other(t), 'drop', id), CATCH_MS + FALL_MS*1.4 + KICK_MS*1.3 + 5000);
+    later(() => doCatch(other(t), 'drop', id, '*'), CATCH_MS + FALL_MS*1.4 + KICK_MS*1.3 + 5000);
     return;
   }
   const M = {
@@ -301,9 +315,13 @@ function resolveFlight(id){
   finish(M[0], M[1].replace(/\+(\d)/, (m, d) => '+' + d*mult + (mult > 1 ? ' (Double Down)' : '')), M[2], id);
 }
 
-function doCatch(side, res, id){
+function doCatch(side, res, id, byId){
   if (!G || G.phase !== 'catch' || !G.shot || G.shot.id !== id || side === G.thrower) return;
   res = res === true ? 'caught' : (res === 'caught' || res === 'fifa') ? res : 'drop';
+  if (res === 'drop' && byId !== '*' && G.seats) {       // in 2v2 the die is only dropped once both defenders miss it
+    if (!G.drops.includes(byId)) G.drops.push(byId);
+    if (G.seats[side].some(p => !G.drops.includes(p.id))) return;
+  }
   G.shot.res = res;
   const pl = G.shot.out === 'plink';
   if (G.shot.fifaOnly) {
@@ -327,10 +345,11 @@ function nextTurn(id){
   if (!G || G.shot.id !== id || G.phase !== 'result') return;
   const w = ['A','B'].find(s => G.score[s] >= G.target);
   if (w) { G.phase = 'over'; G.winner = w; G.msg = ''; commit(); return; }
-  G.thrower = other(G.thrower); G.phase = 'aim'; G.msg = ''; G.sub = '';
+  G.thrower = other(G.thrower); G.phase = 'aim'; G.msg = ''; G.sub = ''; G.drops = [];
+  const team = G.seats[G.thrower]; G.throwerId = team[G.tIdx[G.thrower] % team.length].id; G.tIdx[G.thrower]++;
   commit();
 }
-function rematch(){ if (!G) return; clearTimers(); G = newGame(G.names, G.bPeer, G.target); commit(); }
+function rematch(){ if (!G) return; clearTimers(); G = newGame(G.seats, G.target, G.fmt); commit(); }
 
 // ---------- CPU ----------
 // how good the CPU is: throw scatter, how often it goes for cups, catch skill, FIFA skill, power-up use, thinking time
@@ -364,14 +383,14 @@ function cpuTick(){
       const aimT = goCup ? c/1.18 : (Math.random()*1.1-0.55);
       const powT = goCup ? (0.92-0.3)/0.85 : 0.55 + Math.random()*0.25;
       const n = () => (Math.random()+Math.random()+Math.random()-1.5);
-      doThrow('B', aimT + n()*L.aimN, powT + n()*L.powN);
+      doThrow('B', aimT + n()*L.aimN, powT + n()*L.powN, newSeed(), false, 'cpu');
     }, L.think[0] + Math.random()*L.think[1]);
   }
   if (G.phase === 'catch' && G.thrower === 'A') {
     const id = G.shot.id, p = G.shot.fifaOnly ? 0 : Math.min(L.catchMax, G.shot.zone * L.catchK), r = Math.random();
-    if (r < p) later(() => doCatch('B', 'caught', id), CATCH_MS*(G.shot.zpos + G.shot.zone*0.5));
-    else if (r < p + L.fifa) later(() => doCatch('B', 'fifa', id), CATCH_MS + FALL_MS*0.8 + KICK_MS*0.6);
-    else later(() => doCatch('B', 'drop', id), CATCH_MS + FALL_MS*1.3);
+    if (r < p) later(() => doCatch('B', 'caught', id, 'cpu'), CATCH_MS*(G.shot.zpos + G.shot.zone*0.5));
+    else if (r < p + L.fifa) later(() => doCatch('B', 'fifa', id, 'cpu'), CATCH_MS + FALL_MS*0.8 + KICK_MS*0.6);
+    else later(() => doCatch('B', 'drop', id, 'cpu'), CATCH_MS + FALL_MS*1.3);
   }
 }
 
@@ -382,23 +401,25 @@ function sendIntent(type, data){
 }
 function act(type, data){
   if (isAuthority()) {
-    if (type === 'throw') doThrow(mySide, data.aim, data.power, newSeed());
-    else if (type === 'catch') doCatch(mySide, data.res, data.id);
+    if (type === 'throw') doThrow(mySide, data.aim, data.power, newSeed(), false, myId);
+    else if (type === 'catch') doCatch(mySide, data.res, data.id, myId);
     else if (type === 'rematch') rematch();
     else if (type === 'use') usePU(mySide, data.kind);
   } else if (type === 'throw') {
     const seed = newSeed();
-    doThrow(mySide, data.aim, data.power, seed, true);   // show it now; the host replays the same seed
+    doThrow(mySide, data.aim, data.power, seed, true, myId);   // show it now; the host replays the same seed
     sendIntent('throw', Object.assign({seed}, data));
   } else sendIntent(type, data);
 }
-function handleIntent(it){
-  if (!it || typeof it.seq !== 'number' || it.seq <= lastIntent) return;
-  lastIntent = it.seq;
-  if (it.type === 'throw') doThrow('B', it.aim, it.power, it.seed);
-  else if (it.type === 'catch') doCatch('B', it.res, it.id);
+const lastIntents = {};
+function handleIntent(it, from){
+  if (!it || typeof it.seq !== 'number' || it.seq <= (lastIntents[from] || 0)) return;
+  lastIntents[from] = it.seq;
+  const team = teamOf(from); if (!team) return;
+  if (it.type === 'throw') doThrow(team, it.aim, it.power, it.seed, false, from);
+  else if (it.type === 'catch') doCatch(team, it.res, it.id, from);
   else if (it.type === 'rematch' && G && G.phase === 'over') rematch();
-  else if (it.type === 'use') usePU('B', String(it.kind));
+  else if (it.type === 'use') usePU(team, String(it.kind));
 }
 
 // ---------- local play state ----------
@@ -415,7 +436,7 @@ function onState(){
   if (mode === 'local' && G.phase !== 'over') mySide = G.phase === 'aim' ? G.thrower : other(G.thrower);
   const s = G.shot, now = performance.now();
   if (s && seenAt[s.id] == null) seenAt[s.id] = now - (G.phase === 'flight' ? 0 : FLIGHT + BOUNCE);
-  if (G.phase === 'aim' && G.thrower === mySide && !spectator && aimKey !== G.id) { aimKey = G.id; stage = 1; sent = false; swipe = null; }
+  if (G.phase === 'aim' && G.thrower === mySide && G.throwerId === myId && !spectator && aimKey !== G.id) { aimKey = G.id; stage = 1; sent = false; swipe = null; }
   if (G.phase !== 'aim') { stage = 0; swipe = null; }
   if (G.phase === 'catch' && s) {
     if (!V || V.id !== s.id) V = {id:s.id, t0:now, stop:null};
@@ -474,6 +495,7 @@ function diePos(now){
   if (e < FLIGHT) {
     const t = e / FLIGHT;
     x = sx + (ex-sx)*t; y = sy + (ey-sy)*t; z = sz + (ez-sz)*t + 4*peak*t*(1-t);
+    if (s.shaken) x += Math.sin(t*Math.PI*6) * 0.09 * (1 - t);   // a Shaky Hands throw visibly wobbles in the air
   } else {
     const e2 = e - FLIGHT;
     if (s.out === 'table' || s.out === 'plink') {
@@ -501,7 +523,7 @@ function view(by, x, y){ const v = spectator ? 'A' : mySide; return by === v ? [
 const ov = $('ov'), octx = ov.getContext('2d');
 let W = innerWidth, H = innerHeight;
 function localPt(e){ return {x: e.clientX, y: e.clientY, t: performance.now()}; }
-function myThrowReady(){ return G && G.phase === 'aim' && G.thrower === mySide && !spectator && stage === 1 && !sent; }
+function myThrowReady(){ return G && G.phase === 'aim' && G.thrower === mySide && G.throwerId === myId && !spectator && stage === 1 && !sent; }
 
 function releaseSwipe(){
   const pts = swipe.pts; swipe = null;
@@ -581,7 +603,8 @@ function render(){
   if (!G) return;
   const local = mode === 'local';
   const mine = (spectator || local) ? 'A' : mySide, theirs = other(mine);
-  $('nmMe').textContent = (spectator || local) ? (G.names[mine]||'Player 1') : 'You';
+  const partner = G.seats && !spectator ? G.seats[mine].filter(p => p.id !== myId).map(p => p.name).join('') : '';
+  $('nmMe').textContent = (spectator || local) ? (G.names[mine]||'Player 1') : (partner ? 'You & ' + partner : 'You');
   $('nmOpp').textContent = G.names[theirs] || 'Opponent';
   $('scMe').textContent = G.score[mine];
   $('scOpp').textContent = G.score[theirs];
@@ -602,7 +625,8 @@ function render(){
   if (spectator) status = 'Watching this game';
   else if (local && G.phase === 'aim') status = who + '’s throw. Swipe up: angle is aim, length is power.';
   else if (local && (G.phase === 'flight' || G.phase === 'catch')) status = G.phase === 'flight' ? who + ', get ready to catch' : (D && D.stage === 'fall' ? 'FIFA! ' + who + ', tap it before it hits the floor.' : D && D.stage === 'kick' ? 'It’s up. Tap it again to catch it.' : who + ', tap the die when its ring turns green.');
-  else if (G.phase === 'aim') status = G.thrower === mySide ? (stage === 1 ? 'Your throw. Swipe up: angle is aim, length is power.' : 'Throwing…') : opp + ' is lining up a throw…';
+  else if (G.phase === 'aim' && G.thrower === mySide && G.throwerId !== myId) status = (seatName(G.throwerId) || 'Your partner') + ' is throwing for your team…';
+  else if (G.phase === 'aim') status = G.thrower === mySide ? (stage === 1 ? 'Your throw. Swipe up: angle is aim, length is power.' : 'Throwing…') : (seatName(G.throwerId) || opp) + ' is lining up a throw…';
   else if (G.phase === 'flight') status = G.thrower === mySide ? '' : 'Incoming…';
   else if (G.phase === 'catch') {
     if (G.thrower === mySide) status = opp + ' is going for it…';
@@ -610,8 +634,9 @@ function render(){
     else if (D && D.stage === 'fall') status = 'It’s going off the table. FIFA: tap it right before it hits the floor.';
     else if (D && D.stage === 'kick') status = 'It’s up. Tap it again to catch it.';
   }
-  if (G.phase === 'aim' && !spectator && G.thrower === mySide && G.armed && G.armed[other(mySide)] && G.armed[other(mySide)].shaky)
-    status = 'You’ve been hit with Shaky Hands. This throw will wobble.';
+  const shakenMe = !spectator && G.thrower === mySide && ((G.phase === 'aim' && G.armed && G.armed[other(mySide)] && G.armed[other(mySide)].shaky) || (G.phase === 'flight' && G.shot && G.shot.shaken));
+  if (shakenMe && G.phase === 'aim') status = 'Shaky Hands! ' + (G.names[other(mySide)] || 'They') + ' made your team’s next throw wobble.';
+  $('shade').classList.toggle('shaken', !!shakenMe);
   $('status').textContent = status;
   renderTray();
   if (G.feed && G.feed.n !== lastFeed) {
@@ -870,7 +895,12 @@ function frame(now){
   camera.position.copy(lobbyPos).lerp(GAME_CAM.pos, camBlend);
   camera.lookAt(lookTmp.copy(lobbyLook).lerp(GAME_CAM.look, camBlend));
   const shaky = inGame && G && G.phase === 'aim' && !spectator && G.thrower === mySide && G.armed && G.armed[other(mySide)] && G.armed[other(mySide)].shaky;
-  if (shaky) { camera.position.x += Math.sin(now*0.047)*0.05; camera.position.y += Math.sin(now*0.061)*0.035; camera.lookAt(GAME_CAM.look); }
+  const shakenFlight = inGame && G && G.phase === 'flight' && G.shot && G.shot.shaken && !spectator && G.thrower === mySide;
+  if (shaky || shakenFlight) {
+    const amp = shaky ? 0.16 : 0.1;
+    camera.position.x += (Math.sin(now*0.071) + Math.sin(now*0.13)*0.5)*amp; camera.position.y += (Math.sin(now*0.093) + Math.sin(now*0.151)*0.4)*amp*0.7;
+    camera.lookAt(lookTmp.copy(GAME_CAM.look).add(new THREE.Vector3(Math.sin(now*0.05)*amp*0.6, 0, 0)));
+  }
 
   if (inGame && G) defTick(now);
   const d = inGame && G ? diePos(now) : null;
@@ -903,7 +933,7 @@ function frame(now){
   if (die.userData.gold !== gold) { die.userData.gold = gold; die.material.forEach(m => { m.emissive.setHex(gold ? 0x6a4300 : 0x000000); }); }
   // only redraw the 3D scene when something in it changes; the lobby pan runs at 30 fps
   const wobbling = cups.some(c => c.g.rotation.z !== 0);
-  const busy = dieMoving || drops.length > 0 || wobbling || shaky || moving;
+  const busy = dieMoving || drops.length > 0 || wobbling || shaky || shakenFlight || moving;
   if (busy || sceneDirty > 0 || (!inGame && frameNo % 2 === 0)) {
     if (sceneDirty > 0) sceneDirty--;
     renderer.render(scene, camera);
@@ -970,29 +1000,36 @@ $('loading').hidden = true;
 function showGame(){ $('lobby').hidden = true; $('hud').hidden = false; render(); }
 function showLobby(){
   $('hud').hidden = true; $('lobby').hidden = false;
-  mode = null; G = null; spectator = false; mySide = 'A'; clearTimers();
+  mode = null; G = null; spectator = false; mySide = 'A'; myId = 'me'; clearTimers(); $('shade').classList.remove('shaken');
   aimKey = null; D = null; V = null; stage = 0; swipe = null; trail = null;
 }
 $('cpuBtn').addEventListener('click', () => {
-  mode = 'cpu'; mySide = 'A'; spectator = false;
-  G = newGame({A: nameOr(), B: CPU_LEVELS[cpuLevel].label}, null, gameTo); showGame(); onState();
+  mode = 'cpu'; mySide = 'A'; spectator = false; myId = 'me';
+  G = newGame({A: [{id:'me', name: nameOr()}], B: [{id:'cpu', name: CPU_LEVELS[cpuLevel].label}]}, gameTo, '1v1'); showGame(); onState();
 });
+let gameFmt = '1v1', gameVis = 'public';
+try { if (localStorage.getItem('bd-fmt') === '2v2') gameFmt = '2v2'; if (localStorage.getItem('bd-vis') === 'private') gameVis = 'private'; } catch(e){}
+setupSeg('fmtSeg', () => gameFmt, v => { gameFmt = v === '2v2' ? '2v2' : '1v1'; try { localStorage.setItem('bd-fmt', gameFmt); } catch(e){} });
+setupSeg('visSeg', () => gameVis, v => { gameVis = v === 'private' ? 'private' : 'public'; try { localStorage.setItem('bd-vis', gameVis); } catch(e){} });
 $('leaveBtn').addEventListener('click', () => {
   const gr = gameRoom; gameRoom = null; guestPeer = null;
   if (gr) gr.leave().catch(()=>{});
-  if (lobbyRoom && hostCode) lobbyRoom.presence({hosting:null, open:null}).catch(()=>{});
+  if (lobbyRoom && hostCode) lobbyRoom.presence({hosting:null, open:null, fmt:null, filled:null, need:null}).catch(()=>{});
   hostCode = null; showLobby();
 });
 
 // ---------- online ----------
 function code4(){ const a='ABCDEFGHJKMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<4;i++) s+=a[Math.floor(Math.random()*a.length)]; return s; }
-function waitingScreen(text){
+function waitingScreen(text, names, need){
   $('nmMe').textContent = 'You'; $('scMe').textContent = '0';
   $('nmOpp').textContent = 'Waiting'; $('scOpp').textContent = '0';
   $('sideMe').classList.remove('turn'); $('sideOpp').classList.remove('turn');
-  setBanner('Code ' + hostCode, text || 'Your friend can join from Open games or by typing this code');
-  $('actBtn').hidden = true;
-  $('status').textContent = 'Waiting for an opponent…';
+  $('toLbl').textContent = gameFmt + ' · to ' + gameTo;
+  setBanner((gameVis === 'private' ? 'Private · ' : '') + 'Code ' + hostCode,
+    text || (gameVis === 'private' ? 'Only people you give this code to can join' : 'Friends can join from Open games or with this code'));
+  $('actBtn').hidden = true; $('tray').innerHTML = ''; traySig = '';
+  const have = names ? names.length : 1, total = need || (gameFmt === '2v2' ? 4 : 2);
+  $('status').textContent = 'Players ' + have + '/' + total + (names ? ': ' + names.join(', ') : '') + (have < total ? '. Waiting…' : '');
 }
 const OFFLINE_MSG = 'Live play can’t connect on this device. Open Beer Die from an invite sent to your email (Share → add your email), signed in to Claude. A public link won’t work. Practice vs CPU works anywhere.';
 let offline = false;
@@ -1002,30 +1039,43 @@ async function hostGame(){
   hostCode = code4();
   try { gameRoom = await room.join('bd-' + hostCode.toLowerCase()); }
   catch(e){ $('netNote').textContent = 'Couldn’t open a game room right now. Try again in a moment.'; hostCode = null; return; }
-  mode = 'host'; mySide = 'A'; spectator = false; guestPeer = null; lastIntent = 0; G = null;
-  gameRoom.presence({role:'host', name: nameOr(), game:null}).catch(()=>{});
-  room.presence({hosting: hostCode, name: nameOr(), open: true}).catch(()=>{});
-  showGame(); waitingScreen();
+  mode = 'host'; mySide = 'A'; spectator = false; myId = 'host'; G = null;
+  const fmt = gameFmt, need = fmt === '2v2' ? 3 : 1, pub = gameVis === 'public';
+  let order = [];                       // guests in the order they arrived
+  let lastAd = '', lastWait = '';     // only publish when something changed, never in a loop
+  const advertise = (filled) => { const ad = {hosting: pub ? hostCode : null, name: nameOr(), open: pub && filled < need + 1, fmt, filled, need: need + 1};
+    const k = JSON.stringify(ad); if (k !== lastAd) { lastAd = k; room.presence(ad).catch(()=>{}); } };
+  const announceWait = (names) => { const k = JSON.stringify(names); if (k !== lastWait) { lastWait = k; gameRoom.presence({wait:{fmt, names, need: need + 1}}).catch(()=>{}); } };
+  gameRoom.presence({role:'host', name: nameOr(), game:null, wait:{fmt, names:[nameOr()], need: need + 1}}).catch(()=>{});
+  advertise(1);
+  showGame(); waitingScreen(null, [nameOr()], need + 1);
   gameRoom.onPeers(ch => {
     const guests = ch.peers.filter(p => !p.sameTab && p.presence && p.presence.role === 'guest');
-    if (guestPeer && !guests.find(p => p.peer === guestPeer)) {
-      clearTimers(); guestPeer = null; G = null; D = null; V = null;
-      gameRoom.presence({game:null}).catch(()=>{});
-      room.presence({open:true}).catch(()=>{});
-      waitingScreen('Your opponent left. Waiting for someone new.');
+    const here = new Set(guests.map(p => p.peer));
+    order = order.filter(id => here.has(id));
+    guests.forEach(p => { if (!order.includes(p.peer)) order.push(p.peer); });
+    const byId = id => guests.find(p => p.peer === id);
+    if (G && G.seats) {
+      const missing = ['A','B'].flatMap(t => G.seats[t]).filter(p => p.id !== 'host' && !here.has(p.id));
+      if (missing.length) {
+        clearTimers(); G = null; D = null; V = null;
+        gameRoom.presence({game:null}).catch(()=>{});
+        waitingScreen(missing.map(p => p.name).join(' & ') + ' left. Waiting for players…');
+      }
     }
-    if (!guestPeer && guests.length) {
-      const g = guests[0]; guestPeer = g.peer; lastIntent = 0;
-      G = newGame({A: nameOr(), B: String(g.presence.name||'Guest').slice(0,16)}, g.peer, gameTo);
-      room.presence({open:false}).catch(()=>{});
+    if (!G) {
+      const seated = order.slice(0, need).map(id => ({id, name: String((byId(id).presence.name)||'Guest').slice(0,16)}));
+      const names = [nameOr(), ...seated.map(p => p.name)];
+      announceWait(names);
+      advertise(names.length);
+      if (seated.length < need) { waitingScreen(null, names, need + 1); return; }
+      const me = {id:'host', name: nameOr()};
+      const seats = fmt === '2v2' ? {A: [me, seated[1]], B: [seated[0], seated[2]]} : {A: [me], B: [seated[0]]};
+      G = newGame(seats, gameTo, fmt);
+      advertise(need + 1);
       commit();
     }
-    const gp = guests.find(p => p.peer === guestPeer);
-    if (gp && G) {
-      const nm = String(gp.presence.name||'Guest').slice(0,16);
-      if (G.names.B !== nm) { G.names.B = nm; commit(); }
-      handleIntent(gp.presence.intent);
-    }
+    guests.forEach(p => { if (teamOf(p.peer)) handleIntent(p.presence.intent, p.peer); });
   });
 }
 async function joinGame(code){
@@ -1034,21 +1084,28 @@ async function joinGame(code){
   if (!/^[A-Z]{4}$/.test(code)) { $('netNote').textContent = 'Game codes are 4 letters.'; return; }
   try { gameRoom = await room.join('bd-' + code.toLowerCase()); }
   catch(e){ $('netNote').textContent = 'Couldn’t join that game right now. Try again in a moment.'; return; }
-  mode = 'guest'; mySide = 'B'; spectator = false; G = null;
+  mode = 'guest'; mySide = 'B'; spectator = false; G = null; myId = '';
   gameRoom.presence({role:'guest', name: nameOr(), intent:null}).catch(()=>{});
   showGame();
   setBanner('Joining ' + code, ''); $('status').textContent = 'Connecting…';
   let sawHost = false;
   setTimeout(() => { if (!sawHost && mode === 'guest') { setBanner('No game', 'Nobody is hosting ' + code + ' right now'); $('status').textContent = 'Tap Leave to go back.'; } }, 6000);
   gameRoom.onPeers(ch => {
-    const me = ch.peers.find(p => p.sameTab); if (me) myPeer = me.peer;
+    const me = ch.peers.find(p => p.sameTab); if (me) { myPeer = me.peer; myId = me.peer; }
     const host = ch.peers.find(p => p.presence && p.presence.role === 'host');
     if (!host) { if (sawHost) { G = null; D = null; clearTimers(); setBanner('Host left', 'This game is over'); $('status').textContent = ''; } return; }
     sawHost = true;
     const g = host.presence.game;
-    if (!g || typeof g !== 'object' || !g.score) { setBanner('Get ready', ''); $('status').textContent = 'Waiting for the host…'; return; }
-    spectator = !!(g.bPeer && myPeer && g.bPeer !== myPeer);
-    mySide = spectator ? 'A' : 'B';
+    if (!g || typeof g !== 'object' || !g.score || !g.seats) {
+      const w = host.presence.wait;
+      if (G) { G = null; D = null; clearTimers(); }
+      setBanner('Get ready', w && w.fmt ? w.fmt + ' game' : '');
+      $('status').textContent = w && Array.isArray(w.names) ? 'Players ' + w.names.length + '/' + w.need + ': ' + w.names.map(n => String(n).slice(0,16)).join(', ') + '. Waiting…' : 'Waiting for the host…';
+      return;
+    }
+    const myTeam = ['A','B'].find(t => (g.seats[t] || []).some(p => p.id === myId));
+    spectator = !myTeam;
+    mySide = myTeam || 'A';
     if (pendingThrow && (g.id|0) < pendingThrow.id && performance.now() - pendingThrow.t < 4000) return;
     if (pendingThrow && (g.id|0) >= pendingThrow.id) pendingThrow = null;
     G = JSON.parse(JSON.stringify(g));
@@ -1066,7 +1123,8 @@ function renderGames(peers){
   list.forEach(p => {
     const code = String(p.presence.hosting).slice(0,4);
     const r = document.createElement('div'); r.className = 'game-row';
-    const w = document.createElement('span'); w.className = 'who'; w.textContent = String(p.presence.name||'Someone').slice(0,16) + '’s table';
+    const w = document.createElement('span'); w.className = 'who';
+    w.textContent = String(p.presence.name||'Someone').slice(0,16) + '’s table · ' + (p.presence.fmt === '2v2' ? '2v2' : '1v1') + (p.presence.need ? ' · ' + (p.presence.filled|0) + '/' + (p.presence.need|0) : '');
     const c = document.createElement('code'); c.textContent = code;
     const b = document.createElement('button'); b.textContent = 'Join'; b.addEventListener('click', () => joinGame(code));
     r.append(w, c, b); boxEl.appendChild(r);
@@ -1088,7 +1146,8 @@ function mqttRooms(url, prefix){
     const list = () => { const now = Date.now(); const out = [];
       for (const [id, v] of peers) if (id === me || now - v.seen < 15000) out.push({peer: id, sameTab: id === me, isMe: id === me, presence: v.presence});
       return out; };
-    const emit = () => { const l = list(); listeners.forEach(f => { try { f({peers: l}); } catch(e){ console.error(e); } }); };
+    let emitQueued = false;
+    const emit = () => { if (emitQueued) return; emitQueued = true; setTimeout(() => { emitQueued = false; const l = list(); listeners.forEach(f => { try { f({peers: l}); } catch(e){ console.error(e); } }); }, 0); };
     const pub = () => { if (left) return; peers.set(me, {presence: mine, seen: Date.now()});
       if (client.connected) client.publish(base + me, JSON.stringify({presence: mine, ts: Date.now()}), {retain: true, qos: 0});
       emit(); };
