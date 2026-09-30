@@ -119,7 +119,7 @@ input::placeholder{color:#7d8280}
         <dt>Throw</dt><dd>Swipe up. Angle is aim, length is power.</dd>
         <dt>Drop</dt><dd>Lands on their half and they don't catch it: +1.</dd>
         <dt>Catch</dt><dd>Tap the die while its ring is green.</dd>
-        <dt>FIFA</dt><dd>Only when the die goes off the table untouched: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
+        <dt>FIFA</dt><dd>Only when the die goes off the table untouched, including a throw that goes long: tap it just before it hits the floor to kick it up, then tap again to catch it. +1 for you. Fumble a catch and it’s a drop.</dd>
         <dt>Plink</dt><dd>Off the side of a cup: +1, unless they catch it. It comes off fast, so it’s much harder to catch.</dd>
         <dt>Plop</dt><dd>In the cup: +3. First to 7 wins.</dd>
       </dl>
@@ -213,13 +213,13 @@ function doThrow(side, aim, power){
   G.phase = 'flight'; G.msg = ''; G.sub = '';
   commit();
   const id = G.id;
-  later(() => resolveFlight(id), FLIGHT + (out === 'table' || out === 'plink' ? BOUNCE : 400));
+  later(() => resolveFlight(id), FLIGHT + (out === 'table' || out === 'plink' ? BOUNCE : out === 'long' ? 0 : 400));
 }
 
 function resolveFlight(id){
   if (!G || !G.shot || G.shot.id !== id || G.phase !== 'flight') return;
   const s = G.shot, t = s.by;
-  if (s.out === 'table' || s.out === 'plink') {
+  if (s.out === 'table' || s.out === 'plink' || s.out === 'long') {    // a long throw can still be FIFA'd
     G.phase = 'catch'; commit();
     later(() => doCatch(other(t), 'drop', id), CATCH_MS + FALL_MS*1.4 + KICK_MS*1.3 + 5000);
     return;
@@ -239,6 +239,11 @@ function doCatch(side, res, id){
   res = res === true ? 'caught' : (res === 'caught' || res === 'fifa') ? res : 'drop';
   G.shot.res = res;
   const pl = G.shot.out === 'plink';
+  if (G.shot.out === 'long') {
+    if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked the long one up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
+    else finish('Long', 'Sailed off the end · no point', 'bad', id);
+    return;
+  }
   if (res === 'caught') finish('Caught', pl ? 'Saved a plink · no point' : 'One hand, clean · no point', 'bad', id);
   else if (res === 'fifa') { G.score[side] += 1; finish('FIFA', 'Kicked it up and caught it · +1 ' + (G.names[side]||''), 'great', id); }
   else { G.score[G.thrower] += 1; finish(pl ? 'Plink' : 'Dropped', pl ? 'Rang the cup and got away · +1' : 'Hit the table, not caught · +1', 'good', id); }
@@ -273,7 +278,7 @@ function cpuTick(){
     }, 1500 + Math.random()*900);
   }
   if (G.phase === 'catch' && G.thrower === 'A') {
-    const id = G.shot.id, p = Math.min(0.7, G.shot.zone * 1.8), r = Math.random();
+    const id = G.shot.id, p = G.shot.out === 'long' ? 0 : Math.min(0.7, G.shot.zone * 1.8), r = Math.random();
     if (r < p) later(() => doCatch('B', 'caught', id), CATCH_MS*(G.shot.zpos + G.shot.zone*0.5));
     else if (r < p + 0.1) later(() => doCatch('B', 'fifa', id), CATCH_MS + FALL_MS*0.8 + KICK_MS*0.6);
     else later(() => doCatch('B', 'drop', id), CATCH_MS + FALL_MS*1.3);
@@ -317,7 +322,7 @@ function onState(){
   if (G.phase !== 'aim') { stage = 0; swipe = null; }
   if (G.phase === 'catch' && s) {
     if (!V || V.id !== s.id) V = {id:s.id, t0:now, stop:null};
-    if (amDefender() && (!D || D.id !== s.id)) D = {id:s.id, stage:'catch', t0:now, usedCatch:false, sent:false};
+    if (amDefender() && (!D || D.id !== s.id)) D = {id:s.id, stage: s.out === 'long' ? 'fall' : 'catch', t0:now, usedCatch:false, sent:false};
   }
   if (G.phase === 'result' && s && V && V.id === s.id && V.stop == null) V.stop = (now - V.t0) / CATCH_MS;
   cpuTick();
@@ -329,8 +334,9 @@ function catchPath(s, p){
   const dr = s.drift || 0;
   return [s.lx*1.05 + dr*0.6*p, 1.0 + 0.25*p, 0.1 + 1.3*p - 1.5*p*p];
 }
+const LONG_Z = -0.1;   // a long throw is still dropping when it passes the end of the table
 function fallPos(s, q){
-  const [cx, cy, cz] = catchPath(s, 1), dr = s.drift || 0;
+  const [cx, cy, cz] = s.out === 'long' ? [s.lx, s.ly, LONG_Z] : catchPath(s, 1), dr = s.drift || 0;
   if (q <= 1) return [cx + dr*0.05*q, cy + 0.05*q, cz + (KICKZ - cz)*q*q];
   return [cx + dr*0.05, cy + 0.05, KICKZ + (FLOOR - KICKZ)*Math.min(1, (q-1)*2.5)];
 }
@@ -353,6 +359,7 @@ function obsPos(s, now){
   const p = (res && V.stop != null && res !== 'drop') ? V.stop : (now - V.t0) / CATCH_MS;
   if (res === 'caught') return catchPath(s, Math.min(1, V.stop ?? 0.5));
   if (res === 'fifa') return kickPos(fallPos(s, 0.8), 0.6);
+  if (s.out === 'long') { const q = (now - V.t0) / FALL_MS; return fallPos(s, res === 'drop' ? q : Math.min(1, q)); }
   if (p <= 1) return catchPath(s, p);
   const q = (p - 1) * CATCH_MS / FALL_MS;
   return fallPos(s, res === 'drop' ? q : Math.min(1, q));
@@ -365,7 +372,8 @@ function diePos(now){
   const sx = 0, sy = -0.18, sz = 0.55, peak = 0.6 + s.power*0.35;
   let ex = s.lx, ey = s.ly, ez = 0;
   if (s.out === 'plink' || s.out === 'sink') { ex = s.cup[0]; ey = s.cup[1]; ez = 0.1; }
-  if (s.out === 'wide' || s.out === 'long') ez = FLOOR;
+  if (s.out === 'wide') ez = FLOOR;
+  if (s.out === 'long') ez = LONG_Z;
   if (e < FLIGHT) {
     const t = e / FLIGHT;
     x = sx + (ex-sx)*t; y = sy + (ey-sy)*t; z = sz + (ez-sz)*t + 4*peak*t*(1-t);
@@ -379,6 +387,9 @@ function diePos(now){
         [x, y, z] = (D && D.id === s.id) ? defPos(s, now) : obsPos(s, now);
         if ((D && D.id === s.id && D.stage === 'held') || (G.phase !== 'catch' && s.res !== 'drop' && !(D && D.id === s.id))) spin = s.spin;
       }
+    } else if (s.out === 'long') {
+      [x, y, z] = G.phase === 'flight' ? [ex, ey, ez] : (D && D.id === s.id) ? defPos(s, now) : obsPos(s, now);
+      if (D && D.id === s.id && D.stage === 'held') spin = s.spin;
     } else if (s.out === 'sink') { x = ex; y = ey; z = 0.05; gone = e2 > 90; }
     else if (s.out === 'short') { x = ex; y = ey; z = 0; rest = true; }
     else { x = ex*(1+Math.min(1,e2/400)*0.08); y = ey + (s.out==='long' ? Math.min(1,e2/400)*0.08 : 0); z = FLOOR; rest = true; }
