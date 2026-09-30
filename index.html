@@ -844,7 +844,7 @@ const glc = $('gl');
 const renderer = new THREE.WebGLRenderer({canvas: glc, antialias: true, powerPreference: 'high-performance'});
 // phones get a lighter render so they don't heat up and throttle after a few minutes
 const MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) < 820);
-let dpr = Math.min(devicePixelRatio || 1, MOBILE ? 1.5 : 2);
+let dpr = Math.min(devicePixelRatio || 1, 2);
 renderer.setPixelRatio(dpr);
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
@@ -858,9 +858,13 @@ const TH = 2.5; // tabletop height in feet
 const G2W = (x, y, z) => new THREE.Vector3(x*2, TH + z*4, 4 - y*8);
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
-function canvasTex(w, h, draw, repeat, srgb = true){
-  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+function canvasTex(w, h, draw, repeat, srgb = true, scale){
+  // table tops (512x1024) and die faces are drawn at 2x so the designs stay sharp up close
+  if (scale == null) scale = (w === 512 && h === 1024) || (w === 128 && h === 128) ? 2 : 1;
+  const c = document.createElement('canvas'); c.width = w*scale; c.height = h*scale;
+  const g = c.getContext('2d'); g.scale(scale, scale); draw(g, w, h);
   const t = new THREE.CanvasTexture(c); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = maxAniso;
+  t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
   if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); }
   return t;
 }
@@ -1006,7 +1010,7 @@ const basementProps = new THREE.Group(); scene.children.slice(propMark).forEach(
 const hemi = new THREE.HemisphereLight(0xc9d6e3, 0x2b2118, 0.28); scene.add(hemi);
 const lamp = new THREE.SpotLight(0xffdcae, 2.1, 34, 0.95, 0.55, 1.2);
 lamp.position.set(0, TH + 6.2, 0); lamp.target.position.set(0, 0, 0);
-lamp.castShadow = true; lamp.shadow.mapSize.set(MOBILE ? 1024 : 2048, MOBILE ? 1024 : 2048); lamp.shadow.bias = -0.0004; lamp.shadow.radius = 4; lamp.shadow.camera.near = 1; lamp.shadow.camera.far = 20;
+lamp.castShadow = true; lamp.shadow.mapSize.set(2048, 2048); lamp.shadow.bias = -0.0004; lamp.shadow.radius = 4; lamp.shadow.camera.near = 1; lamp.shadow.camera.far = 20;
 scene.add(lamp, lamp.target);
 const lamp2 = new THREE.PointLight(0xffd2a0, 0.35, 16, 1.6); lamp2.position.set(0, TH + 5.7, 0); scene.add(lamp2);
 const glow = new THREE.PointLight(0xffc07a, 0.7, 16, 1.8); glow.position.set(0, 8.2, -11.5); scene.add(glow);
@@ -1164,12 +1168,20 @@ function buildArena(key){
     ['#13305c','#d9362c','#e8b04a'].forEach((c, i) => { const bn = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 4), new THREE.MeshStandardMaterial({roughness: 0.9, side: THREE.DoubleSide, map: canvasTex(128, 196, (g, w, h) => { g.fillStyle = c; g.fillRect(0,0,w,h); g.fillStyle = '#fff'; g.font = '900 30px "Big Shoulders Display", sans-serif'; g.textAlign = 'center'; g.fillText('BEER', w/2, 80); g.fillText('DIE', w/2, 112); g.font = '700 16px sans-serif'; g.fillText(['2024','2025','2026'][i], w/2, 150); })})); bn.position.set(-6 + i*6, 10.5, -12.9); grp.add(bn); });
     cfg = {floor: court, back: wallMat, side: wallMat, walls: true, bg: 0x1a1d22, fog: [30, 70], lamp: [0xffffff, 2.4, 1.15], hemi: [0xf2f5ff, 0x5a4630, 0.6], top: proTop('#13305c', '#f0f0ea'), pendant: false, spots: sp, seated: true};
   } else {
-    const turf = new THREE.MeshStandardMaterial({roughness: 0.85, map: canvasTex(1024, 1024, (g, w, h) => {
-      for (let i=0;i<16;i++){ g.fillStyle = i%2 ? '#2f7a33' : '#34863a'; g.fillRect(0, i*h/16, w, h/16); }
-      for (let i=0;i<30000;i++){ g.fillStyle = `rgba(${rnd(20,70)|0},${rnd(90,150)|0},${rnd(30,60)|0},.35)`; g.fillRect(rnd(0,w), rnd(0,h), 1, 3); }
-      g.fillStyle = 'rgba(255,255,255,.85)'; for (let i=1;i<16;i+=2) g.fillRect(0, i*h/16 - 3, w, 6);
-      g.fillRect(w/2 - 3, 0, 6, h);
-    })});
+    const turf = new THREE.MeshStandardMaterial({roughness: 0.5, metalness: 0.05, map: canvasTex(1024, 1024, (g, w, h) => {
+      // polished dark arena floor: high contrast for the white die, gold center rings, navy border
+      g.fillStyle = '#15181d'; g.fillRect(0,0,w,h);
+      for (let i=0;i<26000;i++){ g.fillStyle = `rgba(255,255,255,${rnd(0,.035)})`; g.fillRect(rnd(0,w), rnd(0,h), 1, 1); }
+      g.strokeStyle = 'rgba(255,255,255,.035)'; g.lineWidth = 1;
+      for (let x=0;x<=w;x+=32){ g.beginPath(); g.moveTo(x,0); g.lineTo(x,h); g.stroke(); g.beginPath(); g.moveTo(0,x); g.lineTo(w,x); g.stroke(); }
+      const spot = g.createRadialGradient(w/2,h/2,0,w/2,h/2,w*0.3); spot.addColorStop(0,'rgba(60,70,90,.35)'); spot.addColorStop(1,'rgba(60,70,90,0)'); g.fillStyle = spot; g.fillRect(0,0,w,h);
+      g.strokeStyle = '#e8b04a'; g.lineWidth = 6; g.beginPath(); g.arc(w/2, h/2, w*0.2, 0, 7); g.stroke();
+      g.lineWidth = 2; g.beginPath(); g.arc(w/2, h/2, w*0.215, 0, 7); g.stroke();
+      g.strokeStyle = '#1d3f7a'; g.lineWidth = 36; g.strokeRect(60, 60, w-120, h-120);
+      g.strokeStyle = 'rgba(232,176,74,.8)'; g.lineWidth = 3; g.strokeRect(82, 82, w-164, h-164);
+      g.fillStyle = 'rgba(232,176,74,.55)'; g.font = '900 64px "Big Shoulders Display", sans-serif'; g.textAlign = 'center';
+      g.fillText('BEER DIE', w/2, h*0.2); g.save(); g.translate(w/2, h*0.8); g.rotate(Math.PI); g.fillText('BEER DIE', 0, 0); g.restore();
+    }, null, true, 2)});
     const concrete = new THREE.MeshStandardMaterial({color: 0x6b6f75, roughness: 0.9});
     const seat = new THREE.MeshStandardMaterial({color: 0x1d3f7a, roughness: 0.6});
     const sp = [];
@@ -1183,7 +1195,7 @@ function buildArena(key){
     const board2 = new THREE.Mesh(new THREE.PlaneGeometry(16, 6), new THREE.MeshBasicMaterial({map: canvasTex(512, 192, (g, w, h) => { g.fillStyle = '#05070b'; g.fillRect(0,0,w,h); g.strokeStyle = '#e8b04a'; g.lineWidth = 6; g.strokeRect(6,6,w-12,h-12); g.fillStyle = '#e8b04a'; g.font = '900 96px "Big Shoulders Display", sans-serif'; g.textAlign = 'center'; g.fillText('BEER DIE', w/2, 128); })}));
     board2.position.set(0, 26, -32); grp.add(board2);
     stars(grp, 350);
-    cfg = {floor: turf, floorScale: 2.2, walls: false, bg: 0x04060c, fog: [45, 110], lamp: [0xffffff, 2.6, 1.15], hemi: [0xd8e2ff, 0x2a4a22, 0.55], top: proTop('#0d0f12', '#e8b04a'), pendant: false, spots: sp, seated: true};
+    cfg = {floor: turf, floorScale: 2.2, walls: false, bg: 0x04060c, fog: [45, 110], lamp: [0xffffff, 2.6, 1.15], hemi: [0xd8e2ff, 0x2a2e36, 0.6], top: proTop('#0d0f12', '#e8b04a'), pendant: false, spots: sp, seated: true};
   }
   if (cfg.spots) cfg.crowd = makeCrowd(cfg.spots, cfg.seated, grp);
   arenaCfg[key] = cfg; return cfg;
@@ -1353,7 +1365,7 @@ let camBlend = 0;
 function fitCamera(){
   W = innerWidth; H = innerHeight;
   renderer.setSize(W, H, false);
-  const d = Math.min(MOBILE ? 1.5 : 2, devicePixelRatio || 1);
+  const d = Math.min(2, devicePixelRatio || 1);
   ov.width = W*d; ov.height = H*d; octx.setTransform(d,0,0,d,0,0);
   const F = Math.min(W*1.5, H*1.25);
   camera.fov = 2 * Math.atan(H / (2*F)) * 180 / Math.PI; camera.aspect = W / H; camera.updateProjectionMatrix();
@@ -1437,7 +1449,7 @@ function frame(now){
     renderer.render(scene, camera);
     // if the phone still can't keep up, drop to native-ish resolution once
     perfSum += performance.now() - t0; perfN++;
-    if (perfN >= 90) { if (perfSum / perfN > 22 && dpr > 1) { dpr = 1; renderer.setPixelRatio(1); fitCamera(); sceneDirty = 3; renderer.shadowMap.needsUpdate = true; } perfSum = 0; perfN = 0; }
+    if (perfN >= 90) { if (perfSum / perfN > 26 && dpr > 1.5) { dpr = 1.5; renderer.setPixelRatio(1.5); fitCamera(); sceneDirty = 3; renderer.shadowMap.needsUpdate = true; } perfSum = 0; perfN = 0; }
   }
   drawOverlay(now, d);
 }
