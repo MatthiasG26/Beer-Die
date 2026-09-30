@@ -341,7 +341,7 @@ const $ = s => document.getElementById(s);
 const IS_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 const APPCFG = window.BEERDIE_APP || {};
 const SUPPORT_EMAIL = APPCFG.supportEmail || 'matthiasgomez26@gmail.com';
-const FLIGHT = 1100, BOUNCE = 480, CATCH_MS = 1450, FALL_MS = 520, KICK_MS = 900, RESULT_MS = 2400, TARGET = 7;
+const FLIGHT = 1100, BOUNCE = 480, CATCH_MS = 1250, FALL_MS = 520, KICK_MS = 900, RESULT_MS = 2400, TARGET = 7;
 const KICKZ = -0.45, FLOOR = -0.625;         // game z: 1 unit = 4 ft; floor is 2.5 ft below the tabletop
 const CUPS = [[-0.8,0.08],[0.8,0.08],[-0.8,0.92],[0.8,0.92]];
 
@@ -454,7 +454,7 @@ function doThrow(side, aim, power, seed, predict, byId){
   const plink = out === 'plink';
   // catch window as a share of the fall; players get a generous one, the CPU's skill uses the old base so it doesn't get better too
   const zoneBase = (plink ? 0.1 : 0.36 - depth * 0.14) * (sticky ? 2 : 1);   // a plink comes off the cup fast and wild
-  const zone = Math.min(0.72, zoneBase * (plink ? 2 : 1.4));
+  const zone = zoneBase;
   const zpos = plink ? 0.3 + R() * 0.4 : 0.2 + R() * Math.max(0, 0.92 - 0.2 - zone);
   G.id++;
   G.shot = {id:G.id, by:side, aim, power, lx: plink ? cup[0] : lx, ly: plink ? cup[1] : ly, out, cup, zone, zpos, res:null,
@@ -613,7 +613,7 @@ function handleIntent(it, from){
 let aimKey = null, stage = 0, sent = false;
 let D = null;   // my defence as it happens: {id, stage:'catch'|'fall'|'kick'|'held'|'dropped', t0, from, at, usedCatch, sent}
 let V = null;   // what everyone else sees of the catch: {id, t0, stop}
-let swipe = null, trail = null, tapFx = null;
+let swipe = null, trail = null, tapFx = null, ownerPlop = false;
 
 function amDefender(){ return G && !spectator && G.thrower !== mySide; }
 
@@ -638,6 +638,7 @@ function onState(){
 }
 
 // ---------- die paths (thrower's frame; x -1..1 across, y 0..1 along, z in 4 ft units) ----------
+const myCatchMs = () => ownerMode ? 1450 : CATCH_MS;   // the owner's account gets a slower fall to catch
 function catchPath(s, p){
   const dr = s.drift || 0;
   return [s.lx*1.05 + dr*0.6*p, 1.0 + 0.25*p, 0.1 + 1.3*p - 1.5*p*p];
@@ -655,7 +656,7 @@ function dropFrom(a, t){ return [a[0], a[1] + 0.03*t, Math.max(FLOOR, a[2] - 0.6
 
 function defPos(s, now){
   const t = now - D.t0;
-  if (D.stage === 'catch') return catchPath(s, Math.min(1, t / CATCH_MS));
+  if (D.stage === 'catch') return catchPath(s, Math.min(1, t / myCatchMs()));
   if (D.stage === 'fall') return fallPos(s, t / FALL_MS);
   if (D.stage === 'kick') return kickPos(D.from, t / KICK_MS);
   if (D.stage === 'held') return D.at;
@@ -717,6 +718,12 @@ function myThrowReady(){ return G && G.phase === 'aim' && G.thrower === mySide &
 
 function releaseSwipe(){
   const pts = swipe.pts; swipe = null;
+  if (ownerPlop) {   // owner only: two-finger swipe drops it dead-center in one of their cups
+    const c = CUPS.filter(k => k[1] >= 0.5)[Math.random() < 0.5 ? 0 : 1];
+    const aim = (c[0] + (Math.random()-0.5)*0.02) / 1.18, power = (c[1] - 0.3 + (Math.random()-0.5)*0.004) / 0.85;
+    ownerPlop = false; trail = {pts, t: performance.now()}; sent = true; stage = 3;
+    act('throw', {aim, power}); render(); return;
+  }
   if (pts.length < 2) return;
   const a = pts[0], b = pts[pts.length-1];
   const up = a.y - b.y, dx = b.x - a.x;
@@ -735,7 +742,11 @@ function releaseSwipe(){
 function defWindow(now){
   if (!D || !G || !G.shot || D.id !== G.shot.id || G.phase !== 'catch' || D.sent) return null;
   const s = G.shot, t = now - D.t0;
-  if (D.stage === 'catch') { const p = t / CATCH_MS; return {kind:'catch', live: !D.usedCatch && p >= s.zpos && p <= s.zpos + s.zone, armed: !D.usedCatch}; }
+  if (D.stage === 'catch') {
+    const p = t / myCatchMs(), grow = ownerMode ? (s.out === 'plink' ? 2 : 1.4) : 1;
+    const zone = Math.min(0.72, s.zone * grow), zpos = Math.max(0.12, s.zpos - (zone - s.zone) / 2);
+    return {kind:'catch', live: !D.usedCatch && p >= zpos && p <= zpos + zone, armed: !D.usedCatch};
+  }
   if (D.stage === 'fall') { const q = t / FALL_MS; return {kind:'kick', live: q >= 0.35 && q <= 1.12, armed:true}; }
   if (D.stage === 'kick') { const r = t / KICK_MS; return {kind:'fifa', live: r >= 0.42 && r <= 0.85, armed:true}; }
   return null;
@@ -749,7 +760,7 @@ function sendDef(res, now, at){
 function defTick(now){
   if (!D || !G || !G.shot || D.id !== G.shot.id || D.sent || G.phase !== 'catch') return;
   const s = G.shot, t = now - D.t0;
-  if (D.stage === 'catch' && t >= CATCH_MS) { D.stage = 'fall'; D.t0 = now; render(); }
+  if (D.stage === 'catch' && t >= myCatchMs()) { D.stage = 'fall'; D.t0 = now; render(); }
   else if (D.stage === 'fall' && t >= FALL_MS*1.35) sendDef('drop', now, fallPos(s, t/FALL_MS));
   else if (D.stage === 'kick' && t >= KICK_MS*1.15) sendDef('drop', now, kickPos(D.from, t/KICK_MS));
 }
@@ -758,11 +769,12 @@ ov.addEventListener('pointerdown', e => {
   e.preventDefault();
   if (!G || spectator || $('hud').hidden) return;
   const p = localPt(e), now = performance.now();
-  if (myThrowReady()) { swipe = {pts:[p]}; try { ov.setPointerCapture(e.pointerId); } catch(_){} return; }
+  if (swipe && ownerMode) { ownerPlop = true; return; }   // a second finger during the swipe
+  if (myThrowReady()) { ownerPlop = false; swipe = {pts:[p]}; try { ov.setPointerCapture(e.pointerId); } catch(_){} return; }
   const w = defWindow(now);
   if (!w || !w.armed) return;
   const d = diePos(now); if (!d) return;
-  const q = proj(d.x, d.y, d.z), hit = Math.hypot(p.x - q.x, p.y - q.y) < Math.max(80, dieSize(q)*5);
+  const q = proj(d.x, d.y, d.z), hit = Math.hypot(p.x - q.x, p.y - q.y) < Math.max(ownerMode ? 80 : 55, dieSize(q) * (ownerMode ? 5 : 3.5));
   const ok = hit && w.live, s = G.shot, pos = defPos(s, now);
   tapFx = {x:p.x, y:p.y, t:now, ok};
   if (w.kind === 'catch') sendDef(ok ? 'caught' : 'drop', now, pos);   // a fumble is a drop: FIFA is only for a die going off the table untouched
@@ -1512,7 +1524,7 @@ function drawOverlay(now, d){
   // defence ring on the die
   const w = defWindow(now);
   if (w && w.armed && d) {
-    const q = proj(d.x, d.y, d.z), r = Math.max(34, dieSize(q)*3);
+    const q = proj(d.x, d.y, d.z), r = Math.max(ownerMode ? 34 : 26, dieSize(q) * (ownerMode ? 3 : 2.4));
     const col = w.kind === 'kick' ? '232,176,74' : '127,210,155';
     octx.strokeStyle = w.live ? `rgba(${col},.95)` : 'rgba(243,241,236,.28)';
     octx.lineWidth = w.live ? 3 : 1.5;
@@ -1686,8 +1698,8 @@ function renderGames(peers){
 }
 
 // ---------- lobby tabs, who's online, chat, challenges ----------
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
-  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', String(x === t)));
+document.querySelectorAll('.tab[data-pane]').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab[data-pane]').forEach(x => x.setAttribute('aria-selected', String(x === t)));
   document.querySelectorAll('.pane').forEach(p => { p.hidden = p.id !== t.dataset.pane; });
 }));
 let lobbyMe = null, lobbyStatus = 'menu';
