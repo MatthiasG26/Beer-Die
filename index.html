@@ -577,7 +577,7 @@ function doThrow(side, aim, power, seed, predict, byId){
   else {
     for (const c of CUPS) {
       if (c[1] < 0.5) continue;
-      const d = Math.hypot((lx - c[0]) / 0.15, (ly - c[1]) / 0.055);
+      const d = Math.hypot((lx - c[0]) / 0.128, (ly - c[1]) / 0.047);
       if (d < 1) { cup = c; out = d < 0.38 ? 'sink' : 'plink'; break; }
     }
   }
