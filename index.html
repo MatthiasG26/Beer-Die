@@ -374,7 +374,7 @@ input::placeholder{color:#7d8280}
         <dt>Chat</dt><dd>Tap any message to report it or block that player. Blocked players’ messages, games and challenges are hidden.</dd>
         <dt>Power-ups</dt><dd>Earn one for every Plop (hold up to 2). Aim Guide and Double Down are used on your throw. Sticky Hands and Shaky Hands can be used any time and hit their next throw.</dd>
         <dt>Ranks</dt><dd>Win online games to earn rank points (+25, plus a bonus for every Plop); a loss costs 12. Beating the CPU and placing in tournaments earn some too. Ranks: Bronze, Silver, Gold, Platinum, Diamond, Elite, Champion, Unreal. Points reset each season.</dd>
-        <dt>Tournaments</dt><dd>A new Minor Cup every day: 8 players, 3 rounds, 3 entries a day. Majors run on set weekends of the season: 16 players, 4 rounds, final to 11, 2 entries. Lose once and you’re out. Winners get power-ups for their bank and a new dye.</dd>
+        <dt>Tournaments</dt><dd>Real players only. A new Minor Cup every day (up to 8 players, 3 entries a day) and Majors on set weekends of the season (up to 16 players, final to 11, 2 entries). Check in under Compete; the first player in can start it once 3 are in, or it starts itself when full. Matches start automatically. Lose once and you’re out; a no-show for 45 seconds forfeits. Winners get power-ups for their bank and a new dye.</dd>
         <dt>Bank</dt><dd>Prize power-ups are saved to your account. You can use one banked power-up per game, in any mode.</dd>
         <dt>Dyes</dt><dd>Change your die color under Play. Everyone sees your color when you throw.</dd>
       </dl>
@@ -746,7 +746,7 @@ function handleIntent(it, from){
 let aimKey = null, stage = 0, sent = false;
 let D = null;   // my defence as it happens: {id, stage:'catch'|'fall'|'kick'|'held'|'dropped', t0, from, at, usedCatch, sent}
 let V = null;   // what everyone else sees of the catch: {id, t0, stop}
-let swipe = null, trail = null, tapFx = null, ownerPlop = false, cornerTap = 0;
+let swipe = null, trail = null, tapFx = null, ownerPlop = false, cornerTap = 0, cornerSide = '';
 
 function amDefender(){ return G && !spectator && G.thrower !== mySide; }
 
@@ -767,7 +767,7 @@ function onState(){
   if (G.table && G.table !== currentTable) applyTable(G.table);
   if (G.phase === 'over') awardXP();
   trackStats();
-  if (G.phase === 'over' && G.tourney) tourGameOver();
+  if (G.phase === 'over' && G.tourney) liveTourOver();
   cpuTick();
   render();
 }
@@ -855,7 +855,9 @@ function releaseSwipe(){
   const pts = swipe.pts; swipe = null;
   if (ownerPlop) {   // owner only: drops it dead-center in one of their cups
     const c = CUPS.filter(k => k[1] >= 0.5)[Math.random() < 0.5 ? 0 : 1];
-    const aim = (c[0] + (Math.random()-0.5)*0.02) / 1.18, power = (c[1] - 0.3 + (Math.random()-0.5)*0.004) / 0.85;
+    // a plink clips the side of the cup: about two-thirds of a cup-width off center, toward the middle of the table
+    const off = ownerPlop === 'plink' ? -Math.sign(c[0]) * (0.095 + Math.random()*0.01) : (Math.random()-0.5)*0.02;
+    const aim = (c[0] + off) / 1.18, power = (c[1] - 0.3 + (Math.random()-0.5)*0.004) / 0.85;
     ownerPlop = false; trail = {pts, t: performance.now()}; sent = true; stage = 3;
     act('throw', {aim, power}); render(); return;
   }
@@ -904,8 +906,9 @@ ov.addEventListener('pointerdown', e => {
   e.preventDefault();
   if (!G || spectator || $('hud').hidden) return;
   const p = localPt(e), now = performance.now();
-  if (ownerMode && myThrowReady() && p.x < 80 && p.y > H - 170) {   // owner only: double-tap the bottom-left corner
-    if (now - cornerTap < 400) { cornerTap = 0; ownerPlop = true; swipe = {pts:[p]}; releaseSwipe(); } else cornerTap = now;
+  if (ownerMode && myThrowReady() && p.y > H - 170 && (p.x < 80 || p.x > W - 80)) {   // owner only: double-tap bottom-left to Plop, bottom-right to plink
+    const side = p.x < 80 ? 'L' : 'R';
+    if (now - cornerTap < 400 && cornerSide === side) { cornerTap = 0; ownerPlop = side === 'L' ? 'plop' : 'plink'; swipe = {pts:[p]}; releaseSwipe(); } else { cornerTap = now; cornerSide = side; }
     return;
   }
   if (myThrowReady()) { ownerPlop = false; swipe = {pts:[p]}; try { ov.setPointerCapture(e.pointerId); } catch(_){} return; }
@@ -1664,115 +1667,259 @@ function trackStats(){
   if (dirty) saveProg();
 }
 
-// ---------- tournaments: single elimination against CPU rivals ----------
-const RIVALS = ['Chad','Brody','Tanner','Colt','Jax','Hunter','Trey','Blake','Cole','Wyatt','Beau','Gunnar','Knox','Ryder','Pierce','Tate','Reid','Duke','Maverick','Sully','Deacon','Chase','Brock','Rhett','Grady','Walker','Bennett','Hayes','Cash','Boone'];
+// ---------- tournaments: live brackets between real players ----------
+// Players check in to the event's lobby; the first one in organizes. It starts when it fills up, or when the organizer
+// starts it with 3 or more. Everyone then moves to a bracket room. Each match is a private 1v1 game: the top player
+// in the pairing hosts and the other joins automatically. The organizer keeps the bracket; if they drop, the next
+// player who checked in takes over from the last bracket everyone saw.
 const TOUR = {
-  minor: {size: 8,  entries: 3, rounds: ['Quarterfinal','Semifinal','Final'], skill: [['easy','medium'], ['medium','hard'], ['hard']], to: [7, 7, 7]},
-  major: {size: 16, entries: 2, rounds: ['Round of 16','Quarterfinal','Semifinal','Final'], skill: [['medium'], ['medium','hard'], ['hard'], ['pro']], to: [7, 7, 7, 11]},
+  minor: {size: 8,  min: 3, entries: 3, to: 7, finalTo: 7},
+  major: {size: 16, min: 3, entries: 2, to: 7, finalTo: 11},
 };
 const PRIZES = {
   minor: {1: {pu: 2, dye: true, xp: 150, rp: 60}, 2: {xp: 60, rp: 25}, 3: {xp: 30, rp: 10}, 5: {xp: 15}},
   major: {1: {pu: 4, dye: true, xp: 400, rp: 200}, 2: {pu: 2, xp: 150, rp: 100}, 3: {xp: 80, rp: 50}, 5: {xp: 40, rp: 20}, 9: {xp: 20}},
 };
-let T = null, tourFor = null;
-try { const t = JSON.parse(localStorage.getItem('bd-tour') || 'null'); if (t && t.v === 1 && Array.isArray(t.rounds) && t.ev && TOUR[t.ev.kind]) T = t; } catch(e){}
-function saveTour(){ try { if (T) localStorage.setItem('bd-tour', JSON.stringify(T)); else localStorage.removeItem('bd-tour'); } catch(e){} }
+const FORFEIT_MS = 45000, MATCH_DELAY = 5000;
+const roundNames = n => ['Round of 16','Quarterfinal','Semifinal','Final'].slice(Math.max(0, 4 - n));
+const roundsOf = B => Math.round(Math.log2(B.rounds[0].length * 2));
+let TQ = null, TT = null, tourFor = null, tourTimer = null, tourTick = null, lobbyPeersCache = [];
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const pickOne = a => a[Math.floor(Math.random() * a.length)];
-function tourStale(){ if (!T) return false; if (T.ev.kind === 'minor') return T.ev.id !== todaysMinor().id; const m = allMajors().find(m => m.id === T.ev.id); return !m || majorState(m) === 'past'; }
-const liveRun = () => !!(T && !T.done && !tourStale());
 const entriesLeft = ev => ownerMode ? Infinity : Math.max(0, TOUR[ev.kind].entries - ((prog.tour[ev.id] || {}).entries | 0));
-function pairUp(ids, kind, r){ const out = []; for (let i = 0; i < ids.length; i += 2) out.push({a: ids[i], b: ids[i + 1], w: null, sc: null, skill: pickOne(TOUR[kind].skill[r])}); return out; }
-function enterTour(ev){
-  if (liveRun()) { showBracket(); return; }
+const inTour = () => !!(TQ || (TT && !TT.out));
+function liveSaved(){ try { const s = JSON.parse(localStorage.getItem('bd-live') || 'null'); return s && s.tid && s.ev && TOUR[s.ev.kind] ? s : null; } catch(e){ return null; } }
+function saveLive(v){ try { if (v) localStorage.setItem('bd-live', JSON.stringify(v)); else localStorage.removeItem('bd-live'); } catch(e){} }
+function tourGuard(){ if (!inTour()) return false; showToast('You’re in a tournament. Finish or leave it first.'); showBracket(); return true; }
+
+// check-in lobby
+async function checkIn(ev){
+  if (inTour()) { showBracket(); return; }
+  if (!needRoom()) { showToast('Tournaments need live play. Check your connection.'); return; }
   if (entriesLeft(ev) <= 0) return;
-  const cfg = TOUR[ev.kind], rec = prog.tour[ev.id] = prog.tour[ev.id] || {entries: 0, won: false};
-  rec.entries++;
-  const players = {me: {name: nameOr(), dye: myDye()}}, dyeKeys = Object.keys(DYES);
-  shuffle(RIVALS).slice(0, cfg.size - 1).forEach((n, i) => { players['r' + i] = {name: n, dye: Math.random() < 0.45 ? 'white' : pickOne(dyeKeys)}; });
-  T = {v: 1, ev: {id: ev.id, kind: ev.kind, name: ev.name, dye: ev.dye}, players, round: 0, rounds: [pairUp(shuffle(Object.keys(players)), ev.kind, 0)], done: false, place: 0, prize: null};
-  saveTour(); saveProg(); showBracket();
+  let r; try { r = await room.join('tq-' + ev.id); } catch(e){ showToast('Couldn’t reach the tournament lobby. Try again.'); return; }
+  TQ = {ev: {id: ev.id, kind: ev.kind, name: ev.name, dye: ev.dye}, room: r, pid: 'p' + Math.random().toString(36).slice(2, 10), j: Date.now(), list: [], started: false, isTO: false};
+  r.presence({pid: TQ.pid, j: TQ.j, name: nameOr(), dye: myDye(), lvl: myLevel(), rk: rankOf(prog.rp).name}).catch(()=>{});
+  if (lobbyRoom) lobbyRoom.presence({tq: ev.id}).catch(()=>{});
+  r.onPeers(ch => onQueue(ch.peers));
+  showBracket();
 }
-const myMatch = () => T && !T.done ? T.rounds[T.round].find(m => (m.a === 'me' || m.b === 'me') && !m.w) : null;
-function playTour(){
-  const m = myMatch(); if (!m) return;
-  const cfg = TOUR[T.ev.kind], opp = T.players[m.a === 'me' ? m.b : m.a];
-  $('bracket').hidden = true;
-  mode = 'cpu'; mySide = 'A'; spectator = false; myId = 'me'; setStatus('cpu');
-  G = newGame({A: [{id: 'me', name: nameOr(), dye: myDye()}], B: [{id: 'cpu', name: opp.name, dye: opp.dye}]}, cfg.to[T.round], '1v1');
-  G.cpu = m.skill; G.tourney = {ev: T.ev.id, round: T.round, last: T.round === cfg.rounds.length - 1};
-  showGame(); onState();
+function leaveQueue(){ if (!TQ) return; const r = TQ.room; TQ = null; r.leave().catch(()=>{}); if (lobbyRoom) lobbyRoom.presence({tq: null}).catch(()=>{}); }
+function onQueue(peers){
+  if (!TQ || TQ.started) return;
+  const st = peers.map(p => !p.sameTab && p.presence && p.presence.start).find(s => s && s.ev === TQ.ev.id && typeof s.tid === 'string' && Array.isArray(s.ids) && s.ids.includes(TQ.pid));
+  if (st) { const q = TQ; q.started = true; leaveQueue(); enterTourRoom(q, String(st.tid).slice(0, 12), null); return; }
+  TQ.list = peers.filter(p => p.presence && p.presence.pid && !p.presence.start).map(p => ({
+      pid: String(p.presence.pid).slice(0, 16), j: +p.presence.j || 0, me: p.sameTab,
+      name: clean(p.presence.name || 'Player').slice(0, 16), dye: DYES[p.presence.dye] ? p.presence.dye : 'white',
+      rk: RANKS.some(r => r[0] === p.presence.rk) ? p.presence.rk : 'Bronze', lvl: Math.max(1, p.presence.lvl | 0)}))
+    .sort((a, b) => a.j - b.j || (a.pid < b.pid ? -1 : 1));
+  TQ.isTO = !!TQ.list.length && TQ.list[0].pid === TQ.pid;
+  if (TQ.isTO && TQ.list.length >= TOUR[TQ.ev.kind].size) startTour();
+  else showBracket();
 }
-function tourGameOver(){
-  if (!G || !G.tourney || tourFor === G.gid || !T || T.done || T.ev.id !== G.tourney.ev) return;
-  tourFor = G.gid;
-  tourResult(G.winner === mySide, [G.score.A, G.score.B]);
+function startTour(){
+  if (!TQ || !TQ.isTO || TQ.started) return;
+  const cfg = TOUR[TQ.ev.kind], players = TQ.list.slice(0, cfg.size);
+  if (players.length < cfg.min) return;
+  const tid = Math.random().toString(36).slice(2, 10), pl = {};
+  players.forEach(p => { pl[p.pid] = {name: p.name, dye: p.dye, rk: p.rk}; });
+  const q = TQ; q.started = true;
+  q.room.presence({start: {tid, ev: q.ev.id, ids: players.map(p => p.pid)}}).catch(()=>{});
+  setTimeout(() => { q.room.leave().catch(()=>{}); }, 8000);   // long enough for everyone to see the start
+  TQ = null; if (lobbyRoom) lobbyRoom.presence({tq: null}).catch(()=>{});
+  enterTourRoom(q, tid, makeBracket(tid, q.ev, pl));
 }
-const simMatch = m => { if (!m.w) m.w = Math.random() < 0.5 ? m.a : m.b; };
-function tourResult(won, sc){
-  const m = myMatch(); if (!m) return;
-  const cfg = TOUR[T.ev.kind], N = cfg.rounds.length;
-  m.w = won ? 'me' : (m.a === 'me' ? m.b : m.a); m.sc = sc;
-  T.rounds[T.round].forEach(simMatch);
-  if (won && T.round === N - 1) { T.done = true; T.place = 1; }
-  else if (won) { T.round++; T.rounds.push(pairUp(T.rounds[T.round - 1].map(x => x.w), T.ev.kind, T.round)); }
-  else {
-    T.done = true; T.place = T.round === N - 1 ? 2 : Math.pow(2, N - 1 - T.round) + 1;
-    while (T.round < N - 1) { T.round++; const nx = pairUp(T.rounds[T.round - 1].map(x => x.w), T.ev.kind, T.round); nx.forEach(simMatch); T.rounds.push(nx); }
+const mkMatch = (a, b) => ({a, b, w: a && !b ? a : (!a && b ? b : null), sc: null, code: code4(), bye: !a || !b});
+function makeBracket(tid, ev, players){
+  const ids = shuffle(Object.keys(players)), n = ids.length, size = Math.pow(2, Math.ceil(Math.log2(Math.max(2, n))));
+  const slots = ids.concat(Array(size - n).fill(null)), first = [];
+  for (let i = 0; i < size / 2; i++) first.push(mkMatch(slots[i], slots[size - 1 - i]));
+  return {tid, ev, players, rounds: [first], round: 0, done: false, champ: null, v: 1, t0: Date.now(), rt: Date.now()};
+}
+
+// the bracket room
+async function enterTourRoom(q, tid, B){
+  let r; try { r = await room.join('tt-' + tid); } catch(e){ showToast('Couldn’t join the tournament.'); return; }
+  TT = {tid, ev: q.ev, pid: q.pid, j: q.j, room: r, B, isTO: false, reports: {}, seen: {}, launched: null, pending: null, out: false, place: 0, prize: null, pubSig: '', joined: Date.now()};
+  if (!q.rejoin) { const rec = prog.tour[q.ev.id] = prog.tour[q.ev.id] || {entries: 0, won: false}; rec.entries++; saveProg(); }
+  saveLive({tid, ev: q.ev, pid: q.pid, j: q.j, day: dayKey()});
+  r.presence({pid: q.pid, j: q.j, name: nameOr(), reports: {}}).catch(()=>{});
+  r.onPeers(ch => onTour(ch.peers));
+  clearInterval(tourTimer); tourTimer = setInterval(() => { if (TT && TT.room) onTour(TT.room.peers()); }, 3000);
+  showBracket();
+}
+function onTour(peers){
+  if (!TT) return;
+  const now = Date.now(), here = peers.filter(p => p.presence && p.presence.pid);
+  here.forEach(p => { TT.seen[String(p.presence.pid)] = now; });
+  here.forEach(p => { const b = p.presence.bracket; if (b && b.tid === TT.tid && Array.isArray(b.rounds) && b.rounds.length && (!TT.B || (b.v | 0) > (TT.B.v | 0))) TT.B = JSON.parse(JSON.stringify(b)); });
+  const org = here.slice().sort((a, b) => (+a.presence.j || 0) - (+b.presence.j || 0) || (String(a.presence.pid) < String(b.presence.pid) ? -1 : 1))[0];
+  TT.isTO = !!org && String(org.presence.pid) === TT.pid;
+  if (TT.isTO && TT.B && !TT.B.done) organize(here, now);
+  if (TT.isTO && TT.B) { const sig = JSON.stringify(TT.B); if (sig !== TT.pubSig) { TT.pubSig = sig; TT.room.presence({bracket: TT.B}).catch(()=>{}); } }
+  else if (TT.pubSig) { TT.pubSig = ''; TT.room.presence({bracket: null}).catch(()=>{}); }
+  if (!TT.B && now - TT.joined > 12000) { showToast('That tournament has ended.'); quitTour(true); return; }
+  if (TT.B) afterBracket();
+}
+function organize(here, now){
+  const B = TT.B, cur = B.rounds[B.round]; let changed = false;
+  const reports = {};
+  here.forEach(p => { const rs = p.presence.reports; if (rs && typeof rs === 'object') Object.keys(rs).forEach(k => { const v = rs[k]; if (v && typeof v.w === 'string' && !reports[k]) reports[k] = {w: v.w, sc: v.sc, by: String(p.presence.pid)}; }); });
+  const gone = id => now - Math.max(TT.seen[id] || 0, B.rt || B.t0) > FORFEIT_MS;
+  cur.forEach((m, i) => {
+    if (m.w) return;
+    const rep = reports[B.round + ':' + i];
+    if (rep && (rep.by === m.a || rep.by === m.b) && (rep.w === m.a || rep.w === m.b)) {
+      m.w = rep.w; m.sc = Array.isArray(rep.sc) ? rep.sc.slice(0, 2).map(x => Math.max(0, x | 0)) : null; changed = true; return;
+    }
+    if (gone(m.a) || gone(m.b)) { m.w = gone(m.a) && !gone(m.b) ? m.b : m.a; m.ff = true; changed = true; }   // no-shows forfeit
+  });
+  if (cur.every(m => m.w)) {
+    if (B.round >= roundsOf(B) - 1) { B.done = true; B.champ = cur[0].w; }
+    else { const ws = cur.map(m => m.w), nx = []; for (let i = 0; i < ws.length; i += 2) nx.push(mkMatch(ws[i], ws[i + 1])); B.rounds.push(nx); B.round++; B.rt = now; }
+    changed = true;
   }
-  if (T.done) givePrize();
-  saveTour(); saveProg();
+  if (changed) B.v = (B.v | 0) + 1;
 }
-function givePrize(){
-  if (T.prize) return;
-  const pz = PRIZES[T.ev.kind][T.place] || {xp: 10}, lines = [];
+function myLiveMatch(){
+  const B = TT && TT.B; if (!B || B.done || TT.out) return null;
+  const cur = B.rounds[B.round], i = cur.findIndex(m => !m.w && (m.a === TT.pid || m.b === TT.pid));
+  return i < 0 ? null : {m: cur[i], k: B.round + ':' + i};
+}
+function afterBracket(){
+  const B = TT.B, N = roundsOf(B);
+  if (!TT.out) {
+    const lost = B.rounds.findIndex(r => r.some(m => m.w && (m.a === TT.pid || m.b === TT.pid) && m.w !== TT.pid));
+    if (lost >= 0) finishRun(lost === N - 1 ? 2 : Math.pow(2, N - 1 - lost) + 1);
+    else if (B.done && B.champ === TT.pid) finishRun(1);
+  }
+  const mm = myLiveMatch();
+  // my match was settled while I was still in it (the other player forfeited): leave that game
+  // (a finished game shows its own result first; only a game that never started or stalled gets closed, after a grace period)
+  if (TT.launched && (!mm || mm.k !== TT.launched) && mode && !(G && G.phase === 'over')) {
+    TT.settledAt = TT.settledAt || Date.now();
+    if (!G || Date.now() - TT.settledAt > 6000) { TT.launched = null; TT.settledAt = 0; leaveGame(); showBracket(); }
+  } else TT.settledAt = 0;
+  if (mm && TT.launched !== mm.k && !mode && (!TT.pending || TT.pending.k !== mm.k)) {
+    TT.pending = {k: mm.k, at: Date.now() + MATCH_DELAY};
+    clearTimeout(TT.pendT); TT.pendT = setTimeout(launchMatch, MATCH_DELAY);
+    clearInterval(tourTick); tourTick = setInterval(() => { if (TT && TT.pending && !$('bracket').hidden) showBracket(); }, 1000);
+  }
+  if (!$('bracket').hidden) showBracket();
+}
+function launchMatch(){
+  clearInterval(tourTick);
+  if (!TT || !TT.pending) return;
+  const mm = myLiveMatch(), k = TT.pending.k; TT.pending = null;
+  if (!mm || mm.k !== k || mode) return;
+  const B = TT.B, last = B.round === roundsOf(B) - 1, to = last ? TOUR[TT.ev.kind].finalTo : TOUR[TT.ev.kind].to;
+  TT.launched = k; $('bracket').hidden = true;
+  if (mm.m.a === TT.pid) hostGame({fmt: '1v1', private: true, code: mm.m.code, target: to, tour: {tid: TT.tid, k, last, opp: mm.m.b}});
+  else setTimeout(() => { if (TT && TT.launched === k && !mode) joinGame(mm.m.code, {tpid: TT.pid}); }, 1500);   // let the host open the table first
+}
+function liveTourOver(){
+  if (!G || !G.tourney || !TT || G.tourney.tid !== TT.tid || tourFor === G.gid) return;
+  tourFor = G.gid;
+  const [r, i] = String(G.tourney.k).split(':').map(Number), m = TT.B && TT.B.rounds[r] && TT.B.rounds[r][i]; if (!m) return;
+  report(G.tourney.k, G.winner === 'A' ? m.a : m.b, [G.score.A, G.score.B]);   // the top player hosts, so they're side A
+}
+function report(k, w, sc){ if (!TT) return; TT.reports[k] = {w, sc}; TT.room.presence({reports: TT.reports}).catch(()=>{}); }
+function forfeitMine(){ const mm = myLiveMatch(); if (mm) report(mm.k, mm.m.a === TT.pid ? mm.m.b : mm.m.a, null); }
+function finishRun(place){
+  if (TT.out) return;
+  TT.out = true; TT.place = place; TT.prize = givePrize(TT.ev, place);
+  const s = liveSaved(); if (s) saveLive(Object.assign(s, {out: true}));
+}
+function quitTour(now){
+  if (!TT) return;
+  const t = TT; TT = null; clearInterval(tourTimer); clearInterval(tourTick); clearTimeout(t.pendT);
+  if (now) t.room.leave().catch(()=>{}); else setTimeout(() => t.room.leave().catch(()=>{}), 6000);   // let a forfeit report go out first
+  saveLive(null); closeBracket();
+}
+function leaveTourAsk(){
+  if (TQ) { leaveQueue(); closeBracket(); return; }
+  if (!TT) { closeBracket(); return; }
+  if (TT.out || (TT.B && TT.B.done)) { quitTour(false); return; }
+  askBox('Tournament', 'Leave the tournament?', 'You’ll forfeit your next match and be knocked out.', [
+    ['Leave', 'btn-main', () => { forfeitMine(); if (TT && TT.B) { const N = roundsOf(TT.B); finishRun(TT.B.round === N - 1 ? 2 : Math.pow(2, N - 1 - TT.B.round) + 1); } quitTour(false); }],
+    ['Stay', 'btn-sec', null]]);
+}
+async function rejoinTour(s){
+  if (inTour() || !needRoom()) return;
+  enterTourRoom({ev: s.ev, pid: s.pid, j: s.j, rejoin: true}, s.tid, null);
+}
+function givePrize(ev, place){
+  const pz = PRIZES[ev.kind][place] || {xp: 10}, lines = [];
   for (let i = 0; i < (pz.pu || 0); i++) { const opts = PU_KEYS.filter(k => prog.bank[k] < BANK_MAX); if (!opts.length) break; const k = pickOne(opts); prog.bank[k]++; lines.push(PU[k].name + ' power-up for your bank'); }
-  if (pz.dye && T.ev.dye) {
-    if (!prog.dyes.includes(T.ev.dye)) { prog.dyes.push(T.ev.dye); lines.push(DYES[T.ev.dye].name + ' dye (equip it under Play)'); }
-    else lines.push(DYES[T.ev.dye].name + ' dye (already yours)');
+  if (pz.dye && ev.dye) {
+    if (!prog.dyes.includes(ev.dye)) { prog.dyes.push(ev.dye); lines.push(DYES[ev.dye].name + ' dye (equip it under Play)'); }
+    else lines.push(DYES[ev.dye].name + ' dye (already yours)');
   }
   if (pz.rp) { const b = prog.rp; prog.rp += pz.rp; lines.push('+' + pz.rp + ' rank points'); rankToast(b); }
   if (pz.xp) { const before = myLevel(); prog.xp += pz.xp; lines.push('+' + pz.xp + ' XP'); if (myLevel() > before) showToast('Level up! You’re level ' + myLevel()); }
-  if (T.place === 1) { prog.stats[T.ev.kind === 'major' ? 'majorWins' : 'minorWins']++; (prog.tour[T.ev.id] = prog.tour[T.ev.id] || {entries: 1}).won = true; }
-  T.prize = lines;
-  renderLevel(); renderDyes();
+  if (place === 1) { prog.stats[ev.kind === 'major' ? 'majorWins' : 'minorWins']++; (prog.tour[ev.id] = prog.tour[ev.id] || {entries: 1}).won = true; }
+  saveProg(); renderLevel(); renderDyes();
+  return lines;
 }
 const placeText = p => p === 1 ? 'Champion' : p === 2 ? 'Runner-up' : 'Top ' + (p === 3 ? 4 : p === 5 ? 8 : 16);
 function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function goldBtn(text, fn){ const b = el('button', 'btn-main', text); b.style.background = 'var(--gold)'; b.style.color = '#1a1206'; b.addEventListener('click', fn); return b; }
 function showBracket(){
-  if (!T) return;
-  const cfg = TOUR[T.ev.kind], N = cfg.rounds.length, m = myMatch();
-  $('lobby').hidden = true; $('bracket').hidden = false; $('bracket').scrollTop = 0;
-  $('brKind').textContent = (T.ev.kind === 'major' ? 'Major' : 'Minor Cup') + ' · ' + cfg.size + ' players';
-  $('brTitle').textContent = T.ev.name;
-  $('brSub').textContent = T.done ? (T.place === 1 ? 'You won the whole thing.' : 'Knocked out · ' + placeText(T.place)) : cfg.rounds[T.round] + ' · first to ' + cfg.to[T.round] + ' · lose once and you’re out';
-  const pz = $('brPrize'); pz.innerHTML = '';
-  if (T.done && T.prize) {
-    const c = el('div', 'champ'); c.appendChild(el('h3', null, T.place === 1 ? 'Champion' : 'Your prizes'));
-    const ul = el('ul'); (T.prize.length ? T.prize : ['Thanks for playing']).forEach(t => ul.appendChild(el('li', null, t))); c.appendChild(ul); pz.appendChild(c);
-  }
+  if (!TQ && !TT) { closeBracket(); return; }
+  if (mode) return;                     // never cover a game in progress
+  $('lobby').hidden = true; $('bracket').hidden = false;
+  if (TQ) renderQueue(); else renderLive();
+}
+function renderQueue(){
+  const cfg = TOUR[TQ.ev.kind], n = TQ.list.length, org = TQ.list[0];
+  $('brKind').textContent = (TQ.ev.kind === 'major' ? 'Major' : 'Minor Cup') + ' · check-in';
+  $('brTitle').textContent = TQ.ev.name;
+  $('brSub').textContent = n + ' of ' + cfg.size + ' checked in · ' + (n < cfg.min ? 'needs ' + cfg.min + ' to start. Get your friends to open Compete and check in.'
+    : TQ.isTO ? 'Start it whenever you’re ready, or it starts itself at ' + cfg.size + '.' : 'Waiting for ' + (org ? org.name : 'the organizer') + ' to start it.');
+  $('brPrize').innerHTML = '';
   const btns = $('brBtns'); btns.innerHTML = '';
-  if (m) {
-    const opp = T.players[m.a === 'me' ? m.b : m.a];
-    const go = el('button', 'btn-main', 'Play ' + cfg.rounds[T.round] + ' vs ' + opp.name); go.style.background = 'var(--gold)'; go.style.color = '#1a1206'; go.addEventListener('click', playTour);
-    const back = el('button', 'btn-sec', 'Menu'); back.addEventListener('click', closeBracket);
-    btns.append(go, back);
-  } else {
-    const done = el('button', 'btn-main', 'Done'); done.addEventListener('click', () => { T = null; saveTour(); closeBracket(); });
-    btns.appendChild(done);
-  }
+  if (TQ.isTO) { const s = goldBtn('Start now · ' + n + ' players', startTour); s.disabled = n < cfg.min; if (s.disabled) { s.style.background = ''; s.style.color = ''; } btns.appendChild(s); }
+  const lv = el('button', 'btn-sec', 'Leave'); lv.addEventListener('click', leaveTourAsk); btns.appendChild(lv);
   const body = $('brBody'); body.innerHTML = '';
+  const sec = el('div', 'br-round'); sec.appendChild(el('h4', null, 'Checked in'));
+  TQ.list.forEach((p, i) => {
+    const row = el('div', 'match' + (p.me ? ' mine' : ''));
+    row.append(el('span', p.me ? 'me' : 'w', p.name + (p.me ? ' (you)' : '')), el('em', null, i === 0 ? 'Organizer' : ''), el('span', 'l', p.rk + ' · Lv ' + p.lvl), el('em', null, ''));
+    sec.appendChild(row);
+  });
+  body.appendChild(sec);
+}
+function renderLive(){
+  const B = TT.B, btns = $('brBtns'), body = $('brBody'), pz = $('brPrize');
+  $('brKind').textContent = (TT.ev.kind === 'major' ? 'Major' : 'Minor Cup') + ' · live bracket';
+  $('brTitle').textContent = TT.ev.name;
+  btns.innerHTML = ''; body.innerHTML = ''; pz.innerHTML = '';
+  if (!B) { $('brSub').textContent = 'Connecting to the bracket…'; const lv = el('button', 'btn-sec', 'Leave'); lv.addEventListener('click', leaveTourAsk); btns.appendChild(lv); return; }
+  const N = roundsOf(B), names = roundNames(N), nm = id => !id ? '—' : id === TT.pid ? 'You' : ((B.players[id] || {}).name || 'Player');
+  const mm = myLiveMatch(), champ = B.done ? nm(B.champ) : '';
+  let sub;
+  if (TT.out) sub = TT.place === 1 ? 'You won the whole thing.' : 'Knocked out · ' + placeText(TT.place) + (B.done ? ' · ' + champ + ' won it' : ' · you can keep watching');
+  else if (mm) { const opp = nm(mm.m.a === TT.pid ? mm.m.b : mm.m.a), left = TT.pending ? Math.max(0, Math.ceil((TT.pending.at - Date.now()) / 1000)) : 0;
+    sub = 'Your ' + names[B.round] + ' vs ' + opp + (TT.pending ? ' starts in ' + left + 's' : TT.launched === mm.k ? ' · in progress' : '') + ' · first to ' + (B.round === N - 1 ? TOUR[TT.ev.kind].finalTo : TOUR[TT.ev.kind].to); }
+  else sub = B.done ? champ + ' won it.' : 'You’re through. Waiting for the other ' + names[B.round] + (B.rounds[B.round].length > 2 ? 's' : '') + ' to finish…';
+  $('brSub').textContent = sub;
+  if (TT.out && TT.prize) {
+    const c = el('div', 'champ'); c.appendChild(el('h3', null, TT.place === 1 ? 'Champion' : 'Your prizes'));
+    const ul = el('ul'); (TT.prize.length ? TT.prize : ['Thanks for playing']).forEach(t => ul.appendChild(el('li', null, t))); c.appendChild(ul); pz.appendChild(c);
+  }
+  if (mm && TT.pending) btns.appendChild(goldBtn('Play now', () => { clearTimeout(TT.pendT); launchMatch(); }));
+  else if (mm && TT.launched === mm.k) btns.appendChild(goldBtn('Back to my match', () => { TT.launched = null; TT.pending = null; afterBracket(); }));
+  const lv = el('button', TT.out || B.done ? 'btn-main' : 'btn-sec', TT.out || B.done ? 'Done' : 'Leave'); lv.addEventListener('click', leaveTourAsk); btns.appendChild(lv);
   for (let r = 0; r < N; r++) {
-    const sec = el('div', 'br-round'); sec.appendChild(el('h4', null, cfg.rounds[r]));
-    const list = T.rounds[r] || Array.from({length: cfg.size / Math.pow(2, r + 1)}, () => null);
+    const sec = el('div', 'br-round'); sec.appendChild(el('h4', null, names[r]));
+    const list = B.rounds[r] || Array.from({length: B.rounds[0].length / Math.pow(2, r)}, () => null);
     list.forEach(x => {
-      const row = el('div', 'match' + (x && (x.a === 'me' || x.b === 'me') ? ' mine' : ''));
+      const mine = x && (x.a === TT.pid || x.b === TT.pid), row = el('div', 'match' + (mine ? ' mine' : ''));
       if (!x) { row.append(el('span', 'tbd', 'TBD'), el('em', null, ''), el('span', 'tbd', 'TBD'), el('em', null, '')); }
       else [x.a, x.b].forEach((id, k) => {
-        const nm = id === 'me' ? 'You' : T.players[id].name;
-        row.appendChild(el('span', (id === 'me' ? 'me ' : '') + (x.w ? (x.w === id ? 'w' : 'l') : ''), nm + (x.w === id ? ' ✓' : '')));
-        const sc = x.sc ? (id === 'me' ? x.sc[0] : x.sc[1]) : '';
-        row.appendChild(el('em', null, x.sc ? String(sc) : ''));
+        row.appendChild(el('span', (id === TT.pid ? 'me ' : '') + (!id ? 'tbd' : x.w ? (x.w === id ? 'w' : 'l') : ''), (id ? nm(id) : 'Bye') + (x.w === id && id ? ' ✓' : '')));
+        row.appendChild(el('em', null, x.sc ? String(x.sc[k]) : (x.ff && x.w === id ? 'forfeit win' : x.bye && id ? 'bye' : '')));
       });
       sec.appendChild(row);
     });
@@ -1793,28 +1940,32 @@ function tourCard(box, ev, state){
   box.innerHTML = '';
   const cfg = TOUR[ev.kind], left = entriesLeft(ev), rec = prog.tour[ev.id] || {};
   const h = el('div', 'tour-h');
-  const tag = el('span', 'tag' + (ev.kind === 'major' ? ' major' : ''), ev.kind === 'major' ? 'Major' : 'Minor Cup'); h.appendChild(tag);
+  h.appendChild(el('span', 'tag' + (ev.kind === 'major' ? ' major' : ''), ev.kind === 'major' ? 'Major' : 'Minor Cup'));
   if (state === 'live') h.appendChild(el('span', 'tag live', 'Live'));
   if (rec.won) h.appendChild(el('span', 'tag', 'Won'));
   box.appendChild(h);
   box.appendChild(el('h2', null, ev.name));
+  const waiting = lobbyPeersCache.filter(p => !p.sameTab && p.presence && p.presence.tq === ev.id).length + (TQ && TQ.ev.id === ev.id ? 1 : 0);
   box.appendChild(el('p', 'hint', (ev.kind === 'minor' ? 'Today only' : state === 'live' ? 'Live through ' + fmtDay(ev.end) : fmtDay(ev.start) + ' – ' + fmtDay(ev.end) + ' · in ' + daysTo(ev.start) + ' day' + (daysTo(ev.start) === 1 ? '' : 's'))
-    + ' · ' + cfg.size + ' players · ' + cfg.rounds.length + ' rounds · final to ' + cfg.to[cfg.to.length - 1]));
+    + ' · real players · up to ' + cfg.size + ' · lose once and you’re out' + (cfg.finalTo !== cfg.to ? ' · final to ' + cfg.finalTo : '')));
+  if (state === 'live' || ownerMode) box.appendChild(el('p', 'hint', waiting ? waiting + ' checked in right now' : 'Nobody checked in yet. Be first and send your friends the link.'));
   const pr = el('div', 'prize'); pr.appendChild(swatch(ev.dye));
   const t = el('span'); t.appendChild(el('b', null, 'Win: ')); t.appendChild(document.createTextNode(PRIZES[ev.kind][1].pu + ' bank power-ups + ' + DYES[ev.dye].name + ' dye' + (ownsDye(ev.dye) ? ' (yours)' : '')));
   pr.appendChild(t); box.appendChild(pr);
-  const b = el('button', 'btn-main');
-  if (liveRun() && T.ev.id === ev.id) { const m = myMatch(); b.textContent = 'Resume · ' + TOUR[T.ev.kind].rounds[T.round] + (m ? ' vs ' + T.players[m.a === 'me' ? m.b : m.a].name : ''); b.addEventListener('click', showBracket); }
-  else if (liveRun()) { b.textContent = 'Finish your other run first'; b.disabled = true; }
+  const saved = liveSaved(), b = el('button', 'btn-main');
+  if (TQ && TQ.ev.id === ev.id) { b.textContent = 'Checked in · view lobby'; b.addEventListener('click', showBracket); }
+  else if (TT && TT.ev.id === ev.id) { b.textContent = TT.out ? 'View results' : 'Back to your bracket'; b.addEventListener('click', showBracket); }
+  else if (inTour()) { b.textContent = 'You’re in another tournament'; b.disabled = true; }
+  else if (saved && saved.ev.id === ev.id && !saved.out && saved.day === dayKey()) { b.textContent = 'Rejoin your tournament'; b.addEventListener('click', () => rejoinTour(saved)); }
   else if (state !== 'live' && !ownerMode) { b.textContent = 'Opens ' + fmtDay(ev.start); b.disabled = true; }
   else if (left <= 0) { b.textContent = 'No entries left' + (ev.kind === 'minor' ? ' today' : ''); b.disabled = true; }
-  else { b.textContent = 'Enter' + (left === Infinity ? (state !== 'live' ? ' · owner preview' : '') : ' · ' + left + (left === 1 ? ' entry' : ' entries') + ' left'); b.addEventListener('click', () => enterTour(ev)); }
+  else { b.textContent = 'Check in' + (left === Infinity ? (state !== 'live' ? ' · owner preview' : '') : ' · ' + left + (left === 1 ? ' entry' : ' entries') + ' left'); b.addEventListener('click', () => checkIn(ev)); }
   if (!b.disabled) { b.style.background = 'var(--gold)'; b.style.color = '#1a1206'; }
   box.appendChild(b);
 }
 function renderCompete(){
   fixProg();
-  if (T && tourStale()) { T = null; saveTour(); }
+  const sv = liveSaved(); if (sv && !TT && sv.day !== dayKey()) saveLive(null);
   const S = currentSeason();
   $('seasonName').textContent = S ? S.name + ' · ' + S.sub : 'Off-season';
   $('seasonLeft').textContent = S ? (daysTo(S.end) <= 0 ? 'Ends today' : 'Ends in ' + daysTo(S.end) + ' days') : 'The next season is on the way';
@@ -2046,6 +2197,7 @@ function showLobby(){
   aimKey = null; D = null; V = null; stage = 0; swipe = null; trail = null;
 }
 $('cpuBtn').addEventListener('click', () => {
+  if (tourGuard()) return;
   mode = 'cpu'; mySide = 'A'; spectator = false; myId = 'me'; setStatus('cpu');
   G = newGame({A: [{id:'me', name: nameOr(), dye: myDye()}], B: [{id:'cpu', name: CPU_LEVELS[cpuLevel].label}]}, gameTo, '1v1'); G.cpu = cpuLevel; showGame(); onState();
 });
@@ -2056,11 +2208,16 @@ setupSeg('visSeg', () => gameVis, v => { gameVis = v === 'private' ? 'private' :
 $('leaveBtn').addEventListener('click', () => {
   if (G && G.tourney && G.phase !== 'over') {   // leaving a tournament match forfeits it
     askBox('Tournament', 'Forfeit this match?', 'Leaving now counts as a loss and knocks you out.', [
-      ['Forfeit', 'btn-main', () => { if (G && G.tourney && tourFor !== G.gid) { tourFor = G.gid; tourResult(false, [G.score.A, G.score.B]); } leaveGame(); showBracket(); }],
+      ['Forfeit', 'btn-main', () => { if (G && G.tourney && tourFor !== G.gid) { tourFor = G.gid; forfeitMine(); } if (TT) TT.launched = null; leaveGame(); showBracket(); }],
       ['Keep playing', 'btn-sec', null]]);
     return;
   }
   if (G && G.tourney) { betweenGames(() => { leaveGame(); showBracket(); }); return; }
+  if (!G && TT && TT.launched && mode) {   // waiting on a tournament opponent who hasn't shown: leaving forfeits
+    askBox('Tournament', 'Forfeit this match?', 'Leaving now counts as a loss. If your opponent never shows, wait and you’ll win by forfeit.', [
+      ['Forfeit', 'btn-main', () => { forfeitMine(); TT.launched = null; leaveGame(); showBracket(); }], ['Wait', 'btn-sec', null]]);
+    return;
+  }
   if (G && G.phase === 'over') betweenGames(leaveGame); else leaveGame();
 });
 function leaveGame(){
@@ -2118,7 +2275,7 @@ let hostCfg = {fmt: '1v1', pub: true};
 async function hostGame(opts){
   opts = opts || {};
   if (!needRoom()) return;
-  hostCode = code4();
+  hostCode = opts.code || code4();
   try { gameRoom = await room.join('bd-' + hostCode.toLowerCase()); }
   catch(e){ $('netNote').textContent = 'Couldn’t open a game room right now. Try again in a moment.'; hostCode = null; return; }
   mode = 'host'; mySide = 'A'; spectator = false; myId = 'host'; G = null;
@@ -2151,7 +2308,8 @@ async function hostGame(opts){
       seats = {A: [me, mate], B: all.filter(p => p !== me && p !== mate)};
     } else seats = {A: [me], B: [lastSeated[0]]};
     endPick();
-    G = newGame(seats, gameTo, fmt);
+    G = newGame(seats, opts.target || gameTo, fmt);
+    if (opts.tour) G.tourney = opts.tour;
     advertise(lastNames);
     if (pendingChallenge) { pendingChallenge = null; room.presence({challenge: null}).catch(()=>{}); }
     setStatus('playing');
@@ -2168,12 +2326,12 @@ async function hostGame(opts){
   showGame(); waitingScreen(null, [nameOr()], need + 1);
   gameRoom.onPeers(ch => {
     ingestChat('game', ch.peers);
-    const guests = ch.peers.filter(p => !p.sameTab && p.presence && p.presence.role === 'guest');
+    const guests = ch.peers.filter(p => !p.sameTab && p.presence && p.presence.role === 'guest' && (!opts.tour || p.presence.tpid === opts.tour.opp));
     const here = new Set(guests.map(p => p.peer));
     order = order.filter(id => here.has(id));
     guests.forEach(p => { if (!order.includes(p.peer)) order.push(p.peer); });
     const byId = id => guests.find(p => p.peer === id);
-    if (G && G.seats) {
+    if (G && G.seats && !(G.tourney && G.phase === 'over')) {   // a finished tournament match keeps its result on screen
       const missing = ['A','B'].flatMap(t => G.seats[t]).filter(p => p.id !== 'host' && !here.has(p.id));
       if (missing.length) {
         clearTimers(); G = null; D = null; V = null;
@@ -2202,7 +2360,7 @@ async function hostGame(opts){
     guests.forEach(p => { if (teamOf(p.peer)) handleIntent(p.presence.intent, p.peer); });
   });
 }
-async function joinGame(code){
+async function joinGame(code, tj){
   if (!needRoom()) return;
   code = String(code||'').trim().toUpperCase();
   if (!/^[A-Z]{4}$/.test(code)) { $('netNote').textContent = 'Game codes are 4 letters.'; return; }
@@ -2210,11 +2368,12 @@ async function joinGame(code){
   catch(e){ $('netNote').textContent = 'Couldn’t join that game right now. Try again in a moment.'; return; }
   mode = 'guest'; mySide = 'B'; spectator = false; G = null; myId = '';
   chats.game = []; myChat.game = []; renderChat('game'); setStatus('playing');
-  gameRoom.presence({role:'guest', name: nameOr(), dye: myDye(), intent:null}).catch(()=>{});
+  gameRoom.presence({role:'guest', name: nameOr(), dye: myDye(), tpid: tj && tj.tpid || null, intent:null}).catch(()=>{});
   showGame();
   setBanner('Joining ' + code, ''); $('status').textContent = 'Connecting…';
   let sawHost = false;
-  setTimeout(() => { if (!sawHost && mode === 'guest') { setBanner('No game', 'Nobody is hosting ' + code + ' right now'); $('status').textContent = 'Tap Leave to go back.'; } }, 6000);
+  if (tj) { setBanner('Tournament', 'Waiting for your opponent to open the table…'); $('status').textContent = ''; }
+  else setTimeout(() => { if (!sawHost && mode === 'guest') { setBanner('No game', 'Nobody is hosting ' + code + ' right now'); $('status').textContent = 'Tap Leave to go back.'; } }, 6000);
   gameRoom.onPeers(ch => {
     const me = ch.peers.find(p => p.sameTab); if (me) { myPeer = me.peer; myId = me.peer; }
     ingestChat('game', ch.peers);
@@ -2244,9 +2403,9 @@ async function joinGame(code){
     onState();
   });
 }
-$('hostBtn').addEventListener('click', hostGame);
-$('joinBtn').addEventListener('click', () => joinGame($('codeIn').value));
-$('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') joinGame($('codeIn').value); });
+$('hostBtn').addEventListener('click', () => { if (!tourGuard()) hostGame(); });
+$('joinBtn').addEventListener('click', () => { if (!tourGuard()) joinGame($('codeIn').value); });
+$('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter' && !tourGuard()) joinGame($('codeIn').value); });
 
 function renderGames(peers){
   const boxEl = $('games'); boxEl.innerHTML = '';
@@ -2381,8 +2540,12 @@ function checkChallenges(peers){
 }
 $('chalYes').addEventListener('click', () => { const c = openChal; $('chal').hidden = true; openChal = null; if (c) joinGame(c.code); });
 $('chalNo').addEventListener('click', () => { const c = openChal; $('chal').hidden = true; openChal = null; if (c) room.presence({decline: {to: c.from, n: c.n}}).catch(()=>{}); });
+let competeSig = '';
 function onLobbyPeers(peers){
   const me = peers.find(p => p.sameTab); if (me) lobbyMe = me.peer;
+  lobbyPeersCache = peers;
+  const sig = peers.map(p => p.presence && p.presence.tq).filter(Boolean).sort().join();
+  if (sig !== competeSig) { competeSig = sig; if (!$('paneCompete').hidden) renderCompete(); }
   renderGames(peers); renderOnline(peers); ingestChat('lobby', peers); checkChallenges(peers);
 }
 
@@ -2406,7 +2569,7 @@ $('acctDel').addEventListener('click', () => {
         await fbDb.collection('users').doc(u.uid).delete().catch(()=>{});
         await Promise.all(SEASONS.map(S => fbDb.collection('seasons').doc(S.id).collection('leaderboard').doc(u.uid).delete().catch(()=>{})));
         await u.delete();
-        prog = {xp: 0}; fixProg(); T = null; saveTour(); try { localStorage.setItem('bd-prog', JSON.stringify(prog)); localStorage.removeItem('bd-guest'); } catch(e){}
+        prog = {xp: 0}; fixProg(); saveLive(null); try { localStorage.setItem('bd-prog', JSON.stringify(prog)); localStorage.removeItem('bd-guest'); } catch(e){}
         renderLevel(); renderDyes(); showToast('Your account was deleted');
       } catch(err) {
         if (err && err.code === 'auth/requires-recent-login') {
@@ -2498,10 +2661,10 @@ function cloudSave(){
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, {merge: true}).catch(e => console.warn('save failed', e));
     const S = currentSeason();   // the public season leaderboard: name, rank points, level, a couple of stats
-    if (S) fbDb.collection('seasons').doc(S.id).collection('leaderboard').doc(fbUser.uid).set({
+    if (S) try { fbDb.collection('seasons').doc(S.id).collection('leaderboard').doc(fbUser.uid).set({
       name: nameOr(), rp: prog.rp | 0, lvl: myLevel(), plops: prog.stats.plops | 0, wins: prog.stats.wins | 0,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).catch(() => {});
+    }).catch(() => {}); } catch(e){}
   }, 400);
 }
 function renderAcct(){
