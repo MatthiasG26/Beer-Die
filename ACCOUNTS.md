@@ -1,6 +1,6 @@
 # Turning on Beer Dye accounts (Firebase)
 
-Accounts keep each player's level, XP, name, arena and table in the cloud, so progress follows them to any phone. Until `firebase-config.js` is filled in, the game runs without logins and progress stays on each device.
+Accounts keep each player's level, XP, stats, rank, prize bank, dyes, name, arena and table in the cloud, so progress follows them to any phone. Until `firebase-config.js` is filled in, the game runs without logins and progress stays on each device.
 
 ## 1. Create the Firebase project (free)
 1. Go to https://console.firebase.google.com and sign in with your Google account.
@@ -24,11 +24,18 @@ service cloud.firestore {
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
+    match /reports/{id} {
+      allow create: if request.auth != null;
+    }
+    match /seasons/{season}/leaderboard/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
   }
 }
 ```
 
-Each player can only read and write their own progress.
+Each player can only read and write their own progress. Anyone can read the season leaderboard (name, rank points, level, plops, wins), but each player can only write their own row.
 
 ## 4. Get the web config
 1. Project Overview (gear icon) → **Project settings** → scroll to **Your apps** → click the **</>** (Web) icon.

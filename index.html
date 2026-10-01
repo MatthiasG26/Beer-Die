@@ -168,6 +168,73 @@ input::placeholder{color:#7d8280}
 .tray-note{font:500 12px var(--ui);color:var(--muted);align-self:center}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 140px);transform:translateX(-50%);background:var(--glass-2);border:1px solid rgba(232,176,74,.6);color:var(--text);font:500 14px var(--ui);padding:8px 14px;border-radius:4px;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
 .toast b{color:var(--gold);font-weight:600}
+/* stats, ranks, season, tournaments, dyes */
+.tabs{overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none}
+.stats-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:4px;padding:8px 10px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.stat b{font:800 26px/1 var(--display);font-variant-numeric:tabular-nums}
+.stat span{font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat.hot b{color:var(--gold)}
+.rank{display:flex;align-items:center;gap:14px}
+.rank svg{width:58px;height:64px;flex:none;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
+.rank .rt{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.rank .rt b{font:900 34px/.95 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.rank .rt small{font-size:12px;color:var(--muted)}
+.lb-row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.lb-row:first-child{border-top:0}
+.lb-row .n{font:800 18px var(--display);color:var(--muted);text-align:center}
+.lb-row .who{display:flex;flex-direction:column;min-width:0}
+.lb-row .who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.lb-row .who small{font-size:11px;color:var(--muted)}
+.lb-row .rp{font:800 18px var(--display);font-variant-numeric:tabular-nums}
+.lb-row.me .who span,.lb-row.me .rp{color:var(--gold)}
+.sw{width:22px;height:22px;border-radius:5px;display:block;border:1px solid rgba(255,255,255,.35);box-shadow:inset 0 -3px 6px rgba(0,0,0,.25)}
+.arena .sw{margin-bottom:2px}
+.tour-h{display:flex;align-items:center;gap:10px}
+.tour-h .tag{font:700 10px var(--ui);letter-spacing:.2em;text-transform:uppercase;padding:3px 7px;border-radius:3px;background:rgba(255,255,255,.1);color:var(--muted)}
+.tour-h .tag.live{background:var(--red);color:#fff}
+.tour-h .tag.major{background:var(--gold);color:#1a1206}
+.prize{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.prize b{color:var(--text);font-weight:600}
+.sched{display:flex;flex-direction:column}
+.sched-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.sched-row:first-child{border-top:0;padding-top:0}
+.sched-row small{display:block;font-size:12px;color:var(--muted)}
+.sched-row .st{font:700 11px var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sched-row .st.live{color:var(--red)} .sched-row .st.won{color:var(--gold)}
+.bank{display:flex;flex-wrap:wrap;gap:8px}
+.bank .pill{display:flex;gap:6px;align-items:baseline;padding:6px 10px;border:1px solid var(--line);border-radius:4px;font-size:13px}
+.bank .pill b{font:800 18px var(--display);color:var(--gold)}
+.bracket{position:fixed;inset:0;z-index:12;overflow:auto;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 22px) calc(env(safe-area-inset-bottom,0px) + 24px);box-sizing:border-box;background:linear-gradient(180deg, rgba(10,11,12,.9), rgba(10,11,12,.96))}
+.br-in{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.br-title{font:900 clamp(40px,11vw,60px)/.9 var(--display);text-transform:uppercase;margin:0}
+.br-round{display:flex;flex-direction:column;gap:6px}
+.br-round h4{margin:6px 0 0;font:700 11px var(--ui);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.match{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;font-size:14px;background:rgba(255,255,255,.03)}
+.match span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.match .w{font-weight:600;color:var(--text)} .match .l{color:var(--muted)} .match .tbd{color:var(--muted)}
+.match em{font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums}
+.match.mine{border-color:var(--gold);background:rgba(232,176,74,.08)}
+.match .me{color:var(--gold)}
+.champ{border:1px solid var(--gold);border-radius:6px;padding:14px;background:rgba(232,176,74,.1);display:flex;flex-direction:column;gap:8px}
+.champ h3{margin:0;font:900 30px/1 var(--display);text-transform:uppercase;color:var(--gold)}
+.champ ul{margin:0;padding-left:18px;color:var(--text);font-size:14px;line-height:1.5}
+.picker{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,380px);box-sizing:border-box;background:rgba(18,21,23,.95);border:1px solid rgba(232,176,74,.6);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:12px;pointer-events:auto;z-index:6;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.picker h3{margin:0;font:900 32px/1 var(--display);text-transform:uppercase}
+.pk-list{display:flex;flex-direction:column;gap:8px}
+.pk-list button{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--text);padding:12px 14px;text-transform:none;letter-spacing:0;font-size:16px;font-weight:600;text-align:left}
+.pk-list button small{font-size:12px;color:var(--muted);font-weight:500}
+.pk-list button.on{border-color:var(--gold);background:rgba(232,176,74,.14)}
+.pk-list button.on small{color:var(--gold)}
+.pk-teams{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;text-align:center;font-size:14px}
+.pk-teams div{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:4px;padding:8px 6px;display:flex;flex-direction:column;gap:2px}
+.pk-teams div.mine{border-color:var(--gold)}
+.pk-teams i{font:800 16px var(--display);color:var(--muted);font-style:normal}
+.pk-teams .rdy{color:var(--good)}
+#pkReady{background:var(--gold);color:#1a1206}
+.hud:has(#picker:not([hidden])) .bug{visibility:hidden}
 .loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--muted);font:500 14px var(--ui);letter-spacing:.1em;text-transform:uppercase;pointer-events:none}
 </style>
 </head>
@@ -206,6 +273,8 @@ input::placeholder{color:#7d8280}
 
     <nav class="tabs" role="tablist" aria-label="Menu">
       <button class="tab" type="button" role="tab" aria-selected="true" data-pane="panePlay">Play</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-pane="paneCompete">Compete</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-pane="paneStats">Stats</button>
       <button class="tab" type="button" role="tab" aria-selected="false" data-pane="paneOnline">Online <span class="badge" id="onlineCount">0</span></button>
       <button class="tab" type="button" role="tab" aria-selected="false" data-pane="paneRules">Rules</button>
     </nav>
@@ -219,6 +288,10 @@ input::placeholder{color:#7d8280}
       <div class="card">
         <div class="card-h"><h2>Table</h2><p class="hint">Online games use the host’s table</p></div>
         <div class="arenas" id="tables"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Dye</h2><p class="hint">Win tournaments for new colors</p></div>
+        <div class="arenas" id="dyes"></div>
       </div>
       <div class="card">
         <div class="card-h"><h2>Play friends</h2><p class="hint">Host a table or join one</p></div>
@@ -242,6 +315,35 @@ input::placeholder{color:#7d8280}
         <button class="btn-sec" id="cpuBtn">Play the CPU</button>
       </div>
       <p class="note" id="netNote"></p>
+    </div>
+
+    <div class="pane" id="paneCompete" hidden>
+      <div class="card">
+        <div class="card-h"><h2 id="seasonName">Season</h2><p class="hint" id="seasonLeft"></p></div>
+        <div class="rank" id="seasonRank"></div>
+      </div>
+      <div class="card" id="minorCard"></div>
+      <div class="card" id="majorCard"></div>
+      <div class="card">
+        <div class="card-h"><h2>Majors</h2><p class="hint">Each one has its own dye</p></div>
+        <div class="sched" id="majorList"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Power-up bank</h2><p class="hint">Bring one into any game</p></div>
+        <div class="bank" id="bankList"></div>
+      </div>
+    </div>
+
+    <div class="pane" id="paneStats" hidden>
+      <div class="card"><div class="rank" id="rankBox"></div></div>
+      <div class="card">
+        <div class="card-h"><h2>Your stats</h2><p class="hint">All time</p></div>
+        <div class="stats-grid" id="statsGrid"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Leaderboard</h2><p class="hint" id="lbHint"></p></div>
+        <div id="lbList"><p class="empty">Loading…</p></div>
+      </div>
     </div>
 
     <div class="pane" id="paneOnline" hidden>
@@ -271,6 +373,10 @@ input::placeholder{color:#7d8280}
         <dt>Levels</dt><dd>Every finished game earns XP (more for a win). Every 5 levels unlocks a new arena, each bigger and louder than the last. Sign in to keep your level on every device.</dd>
         <dt>Chat</dt><dd>Tap any message to report it or block that player. Blocked players’ messages, games and challenges are hidden.</dd>
         <dt>Power-ups</dt><dd>Earn one for every Plop (hold up to 2). Aim Guide and Double Down are used on your throw. Sticky Hands and Shaky Hands can be used any time and hit their next throw.</dd>
+        <dt>Ranks</dt><dd>Win online games to earn rank points (+25, plus a bonus for every Plop); a loss costs 12. Beating the CPU and placing in tournaments earn some too. Ranks: Bronze, Silver, Gold, Platinum, Diamond, Elite, Champion, Unreal. Points reset each season.</dd>
+        <dt>Tournaments</dt><dd>A new Minor Cup every day: 8 players, 3 rounds, 3 entries a day. Majors run on set weekends of the season: 16 players, 4 rounds, final to 11, 2 entries. Lose once and you’re out. Winners get power-ups for their bank and a new dye.</dd>
+        <dt>Bank</dt><dd>Prize power-ups are saved to your account. You can use one banked power-up per game, in any mode.</dd>
+        <dt>Dyes</dt><dd>Change your die color under Play. Everyone sees your color when you throw.</dd>
       </dl>
       </div>
     </div>
@@ -303,6 +409,17 @@ input::placeholder{color:#7d8280}
   </div>
 </section>
 
+<section class="bracket" id="bracket" hidden>
+  <div class="br-in">
+    <p class="lbl" id="brKind"></p>
+    <h2 class="br-title" id="brTitle"></h2>
+    <p class="note" id="brSub"></p>
+    <div id="brPrize"></div>
+    <div class="row" id="brBtns"></div>
+    <div id="brBody"></div>
+  </div>
+</section>
+
 <section class="hud" id="hud" hidden>
   <div class="bug">
     <div class="team" id="sideMe"><span class="nm" id="nmMe">You</span><span class="sc" id="scMe">0</span></div>
@@ -312,6 +429,14 @@ input::placeholder{color:#7d8280}
   <div class="tray" id="tray"></div>
   <div class="banner" id="banner"></div>
   <div class="toast" id="toast" hidden></div>
+  <div class="picker" id="picker" hidden>
+    <p class="lbl">2v2 · Before the game</p>
+    <h3>Pick your teammate</h3>
+    <div class="pk-list" id="pkList"></div>
+    <div class="pk-teams" id="pkTeams"></div>
+    <button class="btn-main" id="pkReady" type="button">Ready</button>
+    <p class="hint" id="pkTimer"></p>
+  </div>
   <div class="chatp" id="chatPanel" hidden>
     <div class="log" id="gameLog"><p class="empty">Say something to the table.</p></div>
     <div class="quick" id="quick"></div>
@@ -391,7 +516,8 @@ function newGame(seats, target, fmt){
   return {id: Math.floor(Math.random()*9e6)*100, phase:'aim', thrower, throwerId: seats[thrower][0].id,
           tIdx: {A: thrower === 'A' ? 1 : 0, B: thrower === 'B' ? 1 : 0}, drops: [],
           score:{A:0,B:0}, target, fmt: fmt === '2v2' ? '2v2' : '1v1', seats, shot:null, msg:'', sub:'', tone:'', names, winner:null,
-          pu:{A:[], B:[]}, armed:{A:{}, B:{}}, feed:null, arena: arenaKey, table: tableKey, redemption:null};
+          pu:{A:[], B:[]}, armed:{A:{}, B:{}}, feed:null, arena: arenaKey, table: tableKey, redemption:null,
+          gid: Math.random().toString(36).slice(2, 10), bankUsed:{}};
 }
 let myId = 'me';                     // this phone's seat id: 'me' vs the CPU, 'host' when hosting, the room peer id when joining
 function teamOf(id){ if (!G || !G.seats) return null; for (const t of ['A','B']) if (G.seats[t].some(p => p.id === id)) return t; return null; }
@@ -403,17 +529,23 @@ function award(side){
   G.pu[side].push(k); feed(side, (G.names[side]||'Player') + ' earned ' + PU[k].name);
 }
 function canUse(side, kind){
-  if (!G || !PU[kind] || !G.pu[side].includes(kind) || G.armed[side][kind]) return false;
+  if (!G || !PU[kind] || !G.pu[side].includes(kind)) return false;
+  return canPhase(side, kind);
+}
+// a banked prize power-up: one per player per game, on top of the ones earned by Plops
+function canBank(side, kind, by){ return !!(G && PU[kind] && !(G.bankUsed && G.bankUsed[by]) && canPhase(side, kind)); }
+function canPhase(side, kind){
+  if (!G || !G.armed || G.armed[side][kind]) return false;
   if (PU[kind].when === 'throw') return G.phase === 'aim' && G.thrower === side;
   // defensive ones queue up for the opponent's next throw; only locked while their throw is in the air
   if (G.phase === 'over') return false;
   return !((G.phase === 'flight' || G.phase === 'catch') && G.thrower !== side);
 }
-function usePU(side, kind){
-  if (!canUse(side, kind)) return;
-  G.pu[side].splice(G.pu[side].indexOf(kind), 1);
+function usePU(side, kind, bankBy){
+  if (bankBy) { if (!canBank(side, kind, bankBy)) return; G.bankUsed = G.bankUsed || {}; G.bankUsed[bankBy] = kind; }
+  else { if (!canUse(side, kind)) return; G.pu[side].splice(G.pu[side].indexOf(kind), 1); }
   G.armed[side][kind] = true;
-  feed(side, (G.names[side]||'Player') + ' used ' + PU[kind].name);
+  feed(side, (seatName(bankBy) || G.names[side] || 'Player') + ' used ' + (bankBy ? 'a banked ' : '') + PU[kind].name);
   commit();
 }
 function isAuthority(){ return mode === 'cpu' || mode === 'host' || mode === 'local'; }
@@ -457,7 +589,7 @@ function doThrow(side, aim, power, seed, predict, byId){
   const zone = zoneBase;
   const zpos = plink ? 0.3 + R() * 0.4 : 0.2 + R() * Math.max(0, 0.92 - 0.2 - zone);
   G.id++;
-  G.shot = {id:G.id, by:side, aim, power, lx: plink ? cup[0] : lx, ly: plink ? cup[1] : ly, out, cup, zone, zpos, res:null,
+  G.shot = {id:G.id, by:side, pid: byId === undefined ? G.throwerId : byId, aim, power, lx: plink ? cup[0] : lx, ly: plink ? cup[1] : ly, out, cup, zone, zpos, res:null,
             spin: R()*6, drift: plink ? (cup[0] > 0 ? -1 : 1) * (0.6 + R()*0.8) : (R()-0.5)*0.8,
             mult, sticky, shaken, zoneBase,
             fifaOnly: !G.redemption && (out === 'long' || (out === 'wide' && ly >= 0.5)), redemption: !!G.redemption};   // off the end, or wide past the side on their half: FIFA only
@@ -503,7 +635,7 @@ function doCatch(side, res, id, byId){
     if (!G.drops.includes(byId)) G.drops.push(byId);
     if (G.seats[side].some(p => !G.drops.includes(p.id))) return;
   }
-  G.shot.res = res;
+  G.shot.res = res; G.shot.cby = byId;
   const pl = G.shot.out === 'plink';
   if (G.shot.fifaOnly) {
     const lg = G.shot.out === 'long';
@@ -544,9 +676,10 @@ const CPU_LEVELS = {
   easy:   {label:'Easy CPU',   aimN:0.28, powN:0.20, cup:0.15, catchK:1.0, catchMax:0.4,  fifa:0.03, pu:0.3, think:[2200, 1200]},
   medium: {label:'CPU',        aimN:0.16, powN:0.12, cup:0.35, catchK:1.8, catchMax:0.7,  fifa:0.10, pu:0.6, think:[1500, 900]},
   hard:   {label:'Hard CPU',   aimN:0.07, powN:0.055, cup:0.55, catchK:2.7, catchMax:0.9, fifa:0.25, pu:0.95, think:[1100, 600]},
+  pro:    {label:'Pro',        aimN:0.05, powN:0.045, cup:0.62, catchK:3.1, catchMax:0.93, fifa:0.3, pu:1, think:[1000, 500]},
 };
 let cpuLevel = 'medium', gameTo = 7;
-try { const v = localStorage.getItem('bd-cpu'); if (CPU_LEVELS[v]) cpuLevel = v; const t = +localStorage.getItem('bd-to'); if (t === 11) gameTo = 11; } catch(e){}
+try { const v = localStorage.getItem('bd-cpu'); if (CPU_LEVELS[v] && v !== 'pro') cpuLevel = v; const t = +localStorage.getItem('bd-to'); if (t === 11) gameTo = 11; } catch(e){}
 function setupSeg(id, get, set){
   const el = $(id), paint = () => el.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(get()))));
   el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); paint(); });
@@ -557,7 +690,7 @@ setupSeg('diffSeg', () => cpuLevel, v => { if (CPU_LEVELS[v]) cpuLevel = v; try 
 
 function cpuTick(){
   if (mode !== 'cpu' || !G) return;
-  const L = CPU_LEVELS[cpuLevel];
+  const L = CPU_LEVELS[G.cpu] || CPU_LEVELS[cpuLevel];
   if (G.phase === 'aim') {
     const k = G.pu.B.find(k => canUse('B', k));
     if (k && Math.random() < L.pu) { const key = G.id; later(() => { if (G && G.phase === 'aim' && G.id === key) usePU('B', k); }, 500 + Math.random()*500); }
@@ -591,7 +724,7 @@ function act(type, data){
     if (type === 'throw') doThrow(mySide, data.aim, data.power, newSeed(), false, myId);
     else if (type === 'catch') doCatch(mySide, data.res, data.id, myId);
     else if (type === 'rematch') rematch();
-    else if (type === 'use') usePU(mySide, data.kind);
+    else if (type === 'use') usePU(mySide, data.kind, data.bank ? myId : null);
   } else if (type === 'throw') {
     const seed = newSeed();
     doThrow(mySide, data.aim, data.power, seed, true, myId);   // show it now; the host replays the same seed
@@ -606,7 +739,7 @@ function handleIntent(it, from){
   if (it.type === 'throw') doThrow(team, it.aim, it.power, it.seed, false, from);
   else if (it.type === 'catch') doCatch(team, it.res, it.id, from);
   else if (it.type === 'rematch' && G && G.phase === 'over') rematch();
-  else if (it.type === 'use') usePU(team, String(it.kind));
+  else if (it.type === 'use') usePU(team, String(it.kind), it.bank ? from : null);
 }
 
 // ---------- local play state ----------
@@ -633,6 +766,8 @@ function onState(){
   if (G.arena && G.arena !== currentArena) applyArena(G.arena);
   if (G.table && G.table !== currentTable) applyTable(G.table);
   if (G.phase === 'over') awardXP();
+  trackStats();
+  if (G.phase === 'over' && G.tourney) tourGameOver();
   cpuTick();
   render();
 }
@@ -791,11 +926,15 @@ let kickFx = 0;
 
 let flashTimer = null;
 function flashStatus(t){ $('status').textContent = t; clearTimeout(flashTimer); flashTimer = setTimeout(render, 1600); }
-$('actBtn').addEventListener('click', () => { if (G && !spectator && G.phase === 'over') betweenGames(() => act('rematch', {})); });
+$('actBtn').addEventListener('click', () => {
+  if (!G || spectator || G.phase !== 'over') return;
+  if (G.tourney) betweenGames(() => { leaveGame(); showBracket(); });
+  else betweenGames(() => act('rematch', {}));
+});
 document.addEventListener('keydown', e => {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   if ($('hud').hidden || !G || G.phase !== 'over') return;
-  if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); act('rematch', {}); }
+  if ((e.code === 'Space' || e.code === 'Enter') && !G.tourney) { e.preventDefault(); act('rematch', {}); }
 });
 
 // ---------- HUD ----------
@@ -823,8 +962,10 @@ function render(){
   if (G.phase === 'result') setBanner(G.msg, G.sub, tone);
   else if (G.phase === 'over') {
     const won = G.winner === mine && !spectator;
-    setBanner((spectator || local) ? (G.names[G.winner] + ' wins') : (won ? 'You win' : 'You lose'), G.score[mine] + ' – ' + G.score[theirs] + (lastGain && lastGain.id === G.id ? '  ·  +' + lastGain.gain + ' XP · Level ' + lastGain.level : ''), (won || local) ? 'var(--gold)' : 'var(--text)');
-    if (!spectator) $('actBtn').hidden = false;
+    const rpTxt = lastRP && lastRP.gid === G.gid ? ' · ' + (lastRP.rp > 0 ? '+' : '') + lastRP.rp + ' RP' : '';
+    const big = G.tourney && !spectator ? (won ? (G.tourney.last ? 'Champion' : 'You advance') : 'Knocked out') : (spectator || local) ? (G.names[G.winner] + ' wins') : (won ? 'You win' : 'You lose');
+    setBanner(big, G.score[mine] + ' – ' + G.score[theirs] + (lastGain && lastGain.id === G.id ? '  ·  +' + lastGain.gain + ' XP · Level ' + lastGain.level : '') + rpTxt, (won || local) ? 'var(--gold)' : 'var(--text)');
+    if (!spectator) { $('actBtn').hidden = false; $('actBtn').textContent = G.tourney ? 'Continue' : 'Rematch'; }
   } else if (G.redemption && (G.phase === 'aim' || G.phase === 'flight')) {
     const mine2 = G.redemption.loser === mySide && !spectator;
     setBanner('Redemption', (mine2 ? 'Plop it to stay alive' : (G.names[G.redemption.loser] || 'They') + (G.fmt === '2v2' ? ' need' : ' needs') + ' a Plop to stay alive'), 'var(--gold)');
@@ -852,12 +993,13 @@ function render(){
 }
 let lastFeed = 0, toastTimer = null;
 function showToast(text){ const t = $('toast'); t.textContent = text; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2800); }
-let traySig = '';
+let traySig = '', bankOpen = false;
 function renderTray(){
   const tray = $('tray');
   const inv = (G && G.pu && G.pu[mySide]) || [], armed = (G && G.armed && G.armed[mySide]) || {};
   // only rebuild when something changed, so a tap in progress is never lost
-  const sig = (!G || spectator || !G.pu) ? '' : JSON.stringify([mySide, inv, armed, inv.map(k => canUse(mySide, k)), (G.pu[other(mySide)]||[]).length, G.names[other(mySide)]]);
+  const bankOk = G && !spectator && mode !== 'local' && G.phase !== 'over' && !(G.bankUsed && G.bankUsed[myId]) && bankTotal() > 0;
+  const sig = (!G || spectator || !G.pu) ? '' : JSON.stringify([mySide, inv, armed, inv.map(k => canUse(mySide, k)), (G.pu[other(mySide)]||[]).length, G.names[other(mySide)], bankOk, bankOpen, bankOk && PU_KEYS.map(k => [prog.bank[k], canBank(mySide, k, myId)])]);
   if (sig === traySig) return;
   traySig = sig; tray.innerHTML = '';
   if (!sig) return;
@@ -874,6 +1016,20 @@ function renderTray(){
     b.append(n, d); b.addEventListener('click', () => act('use', {kind: k}));
     tray.appendChild(b);
   });
+  if (bankOk && !bankOpen) {
+    const b = document.createElement('button'); b.className = 'pu';
+    const n = document.createElement('b'); n.textContent = 'Bank'; const d = document.createElement('span'); d.textContent = bankTotal() + ' saved · use 1 this game';
+    b.append(n, d); b.addEventListener('click', () => { bankOpen = true; renderTray(); }); tray.appendChild(b);
+  } else if (bankOk) {
+    PU_KEYS.filter(k => prog.bank[k] > 0).forEach(k => {
+      const b = document.createElement('button'); b.className = 'pu'; b.disabled = !canBank(mySide, k, myId);
+      const n = document.createElement('b'); n.textContent = PU[k].name;
+      const d = document.createElement('span'); d.textContent = 'Banked ×' + prog.bank[k] + (b.disabled ? (PU[k].when === 'throw' ? ' · on your throw' : ' · after this throw') : ' · ' + PU[k].desc);
+      b.append(n, d); b.addEventListener('click', () => { bankOpen = false; act('use', {kind: k, bank: true}); }); tray.appendChild(b);
+    });
+    const x = document.createElement('button'); x.className = 'pu'; const xb = document.createElement('b'); xb.textContent = 'Close'; x.append(xb);
+    x.addEventListener('click', () => { bankOpen = false; renderTray(); }); tray.appendChild(x);
+  }
   const oc = ((G.pu[other(mySide)]) || []).length;
   if (oc) { const s = document.createElement('span'); s.className = 'tray-note'; s.textContent = (G.names[other(mySide)] || 'Opponent') + ' holds ' + oc + ' power-up' + (oc > 1 ? 's' : ''); tray.appendChild(s); }
 }
@@ -943,14 +1099,37 @@ const fabricMap = canvasTex(256, 256, (g, w, h) => {
   for (let y=0;y<h;y+=2){ g.fillStyle=`rgba(0,0,0,${rnd(.05,.15)})`; g.fillRect(0,y,w,1); }
   for (let x=0;x<w;x+=2){ g.fillStyle=`rgba(255,255,255,${rnd(0,.04)})`; g.fillRect(x,0,1,h); }
 }, [4,2]);
-function dieFace(n){
+// die colors: the classic white one, plus prize dyes won in tournaments
+const DYES = {
+  white:   {name:'Classic',       base:['#fbfaf5','#e7e4da'], pip:null,      one:'#b3261e'},
+  red:     {name:'Solo Red',      base:['#dc3a2e','#a51f18'], pip:'#fff6ee', one:'#fff6ee'},
+  blue:    {name:'Royal',         base:['#3566d6','#1d3c93'], pip:'#ffffff', one:'#ffffff'},
+  green:   {name:'Keg Green',     base:['#35a05c','#1c6a3a'], pip:'#ffffff', one:'#ffffff'},
+  purple:  {name:'Purple Haze',   base:['#8250d0','#4f2790'], pip:'#ffffff', one:'#ffffff'},
+  orange:  {name:'Blaze',         base:['#f5842a','#c2530e'], pip:'#ffffff', one:'#ffffff'},
+  pink:    {name:'Pink Lemonade', base:['#f384b9','#cc4d8a'], pip:'#ffffff', one:'#ffffff'},
+  black:   {name:'Blackout',      base:['#2e2f33','#111214'], pip:'#f3f1ec', one:'#e8b04a'},
+  chrome:  {name:'Chrome',        base:['#f1f4f7','#8e98a4'], pip:'#1a1d21', one:'#1a1d21', metal:0.8, rough:0.16},
+  crimson: {name:'Homecoming',    base:['#9a1d27','#5c0f16'], pip:'#e8b04a', one:'#e8b04a'},
+  glow:    {name:'Glow',          base:['#d2ff6a','#8fdc2a'], pip:'#16210a', one:'#16210a', glow:0x2f5a0a},
+  ice:     {name:'Ice',           base:['#e3f6ff','#8fcdef'], pip:'#0d3550', one:'#0d3550', rough:0.1},
+  gold:    {name:'Gold',          base:['#f6d886','#b9861f'], pip:'#2a1c04', one:'#2a1c04', metal:0.85, rough:0.22},
+};
+function dieFace(n, dk){
+  const D = DYES[dk] || DYES.white;
   return canvasTex(128, 128, (g, w, h) => {
-    const gr = g.createLinearGradient(0,0,w,h); gr.addColorStop(0,'#fbfaf5'); gr.addColorStop(1,'#e7e4da');
+    const gr = g.createLinearGradient(0,0,w,h); gr.addColorStop(0, D.base[0]); gr.addColorStop(1, D.base[1]);
     g.fillStyle = gr; g.fillRect(0,0,w,h);
     g.strokeStyle='rgba(0,0,0,.18)'; g.lineWidth=6; g.strokeRect(0,0,w,h);
     const P = {1:[[.5,.5]],2:[[.27,.27],[.73,.73]],3:[[.25,.25],[.5,.5],[.75,.75]],4:[[.27,.27],[.73,.27],[.27,.73],[.73,.73]],5:[[.25,.25],[.75,.25],[.5,.5],[.25,.75],[.75,.75]],6:[[.27,.22],[.73,.22],[.27,.5],[.73,.5],[.27,.78],[.73,.78]]}[n];
-    P.forEach(([x,y]) => { const r = n===1 ? 14 : 10; const pg = g.createRadialGradient(x*w-2,y*h-2,1,x*w,y*h,r); pg.addColorStop(0,'#3a3a3a'); pg.addColorStop(1,'#0e0e0e'); g.fillStyle = n===1 ? '#b3261e' : pg; g.beginPath(); g.arc(x*w,y*h,r,0,7); g.fill(); });
+    P.forEach(([x,y]) => { const r = n===1 ? 14 : 10; const pg = g.createRadialGradient(x*w-2,y*h-2,1,x*w,y*h,r); pg.addColorStop(0,'#3a3a3a'); pg.addColorStop(1,'#0e0e0e'); g.fillStyle = n===1 ? D.one : (D.pip || pg); g.beginPath(); g.arc(x*w,y*h,r,0,7); g.fill(); });
   });
+}
+const dyeMatCache = {};
+function dyeMats(k){
+  if (!DYES[k]) k = 'white';
+  if (!dyeMatCache[k]) { const D = DYES[k]; dyeMatCache[k] = [1,6,2,5,3,4].map(n => new THREE.MeshStandardMaterial({map: dieFace(n, k), roughness: D.rough || 0.28, metalness: D.metal || 0, emissive: new THREE.Color(D.glow || 0)})); }
+  return dyeMatCache[k];
 }
 // chalkboard with the house rules
 let boardTex = null;
@@ -1020,7 +1199,8 @@ const cups = CUPS.map(([cx, cy]) => {
 
 // the die: 5/8" is invisible from 15 ft, so it is scaled up a little
 const DIE = 0.17;
-const die = shadowy(new THREE.Mesh(new THREE.BoxGeometry(DIE, DIE, DIE), [1,6,2,5,3,4].map(n => new THREE.MeshStandardMaterial({map: dieFace(n), roughness: 0.28}))), true, false);
+const die = shadowy(new THREE.Mesh(new THREE.BoxGeometry(DIE, DIE, DIE), dyeMats('white')), true, false);
+die.userData.dye = 'white';
 die.castShadow = false; die.visible = false; scene.add(die);
 const blobTex = canvasTex(64, 64, (g, w, h) => { const r = g.createRadialGradient(32,32,0,32,32,32); r.addColorStop(0,'rgba(0,0,0,.75)'); r.addColorStop(0.5,'rgba(0,0,0,.35)'); r.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0,0,w,h); }, null, false);
 const blob = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({map: blobTex, transparent: true, depthWrite: false}));
@@ -1399,6 +1579,315 @@ function awardXP(){
   cloudSave();
 }
 
+// ---------- seasons, ranks, stats, tournaments and the prize bank ----------
+const dayKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const parseDay = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const daysTo = k => Math.round((parseDay(k) - parseDay(dayKey())) / 864e5);
+const fmtDay = k => parseDay(k).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+const SEASONS = [
+  {id:'s1', name:'Season 1', sub:'Frat Row', start:'2026-09-30', end:'2026-12-31', majors:[
+    {id:'s1-kickoff',    name:'Kickoff Major',      start:'2026-10-02', end:'2026-10-04', dye:'chrome'},
+    {id:'s1-homecoming', name:'Homecoming Major',   start:'2026-10-16', end:'2026-10-18', dye:'crimson'},
+    {id:'s1-halloween',  name:'Halloween Major',    start:'2026-10-30', end:'2026-11-01', dye:'glow'},
+    {id:'s1-rivalry',    name:'Rivalry Week Major', start:'2026-11-20', end:'2026-11-22', dye:'ice'},
+    {id:'s1-finals',     name:'Season 1 Finals',    start:'2026-12-11', end:'2026-12-13', dye:'gold'}]},
+  {id:'s2', name:'Season 2', sub:'Spring Break', start:'2027-01-01', end:'2027-03-31', majors:[
+    {id:'s2-winter',      name:'Winter Major',       start:'2027-01-22', end:'2027-01-24', dye:'ice'},
+    {id:'s2-valentine',   name:'Valentine Major',    start:'2027-02-12', end:'2027-02-14', dye:'crimson'},
+    {id:'s2-springbreak', name:'Spring Break Major', start:'2027-03-12', end:'2027-03-14', dye:'gold'},
+    {id:'s2-finals',      name:'Season 2 Finals',    start:'2027-03-26', end:'2027-03-28', dye:'chrome'}]},
+];
+function currentSeason(){ const t = dayKey(); return SEASONS.find(s => t >= s.start && t <= s.end) || null; }
+const allMajors = () => SEASONS.flatMap(s => s.majors.map(m => Object.assign({kind: 'major'}, m)));
+const majorState = m => { const t = dayKey(); return t < m.start ? 'upcoming' : t > m.end ? 'past' : 'live'; };
+const MINORS = [['Sunday Scaries Cup','black'],['Keg Stand Cup','red'],['Tailgate Cup','blue'],['Basement Cup','green'],['Quad Cup','purple'],['Pregame Cup','orange'],['Rush Week Cup','pink']];
+const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function todaysMinor(){ const d = new Date(), [name, dye] = MINORS[d.getDay()]; return {id: 'minor-' + dayKey(d), kind: 'minor', name, dye}; }
+const RANKS = [['Bronze',0,'#b8794a'],['Silver',200,'#c6ccd2'],['Gold',500,'#e8b04a'],['Platinum',900,'#63d2c4'],['Diamond',1400,'#7aa8ff'],['Elite',2000,'#c58bff'],['Champion',2800,'#ff7a5c'],['Unreal',4000,'#f3f1ec']];
+function rankOf(rp){ let i = 0; while (i + 1 < RANKS.length && rp >= RANKS[i + 1][1]) i++; return {i, name: RANKS[i][0], color: RANKS[i][2], lo: RANKS[i][1], next: RANKS[i + 1] || null}; }
+const STAT_KEYS = ['games','wins','losses','shots','plops','plinks','hits','catches','fifas','points','redemptions','streak','best','onGames','onWins','minorWins','majorWins'];
+const BANK_MAX = 5;
+function fixProg(){
+  if (!prog.stats || typeof prog.stats !== 'object') prog.stats = {};
+  STAT_KEYS.forEach(k => { prog.stats[k] = Math.max(0, prog.stats[k] | 0); });
+  if (!prog.bank || typeof prog.bank !== 'object') prog.bank = {};
+  PU_KEYS.forEach(k => { prog.bank[k] = Math.max(0, Math.min(BANK_MAX, prog.bank[k] | 0)); });
+  prog.dyes = Array.isArray(prog.dyes) ? [...new Set(prog.dyes.filter(k => DYES[k]))] : [];
+  if (!DYES[prog.dye]) prog.dye = 'white';
+  prog.rp = Math.max(0, prog.rp | 0);
+  if (!prog.tour || typeof prog.tour !== 'object') prog.tour = {};
+  const S = currentSeason();
+  if (S && prog.season !== S.id) { if (prog.season) prog.lastSeason = {id: prog.season, rp: prog.rp | 0}; prog.season = S.id; prog.rp = 0; }
+  const today = 'minor-' + dayKey();
+  Object.keys(prog.tour).forEach(k => { if (k.startsWith('minor-') && k !== today) delete prog.tour[k]; });
+}
+fixProg();
+let rkSent = null;
+function saveProg(){
+  try { localStorage.setItem('bd-prog', JSON.stringify(prog)); } catch(e){}
+  const rk = rankOf(prog.rp).name; if (rk !== rkSent && lobbyRoom) { rkSent = rk; lobbyRoom.presence({rk}).catch(()=>{}); }
+  cloudSave();
+}
+const ownsDye = k => k === 'white' || ownerMode || prog.dyes.includes(k);
+const myDye = () => ownsDye(prog.dye) ? prog.dye : 'white';
+const bankTotal = () => PU_KEYS.reduce((n, k) => n + (prog.bank[k] | 0), 0);
+function dyeOfSeat(id){ if (!G || !G.seats) return 'white'; for (const t of ['A','B']) { const p = G.seats[t].find(p => p.id === id); if (p) return DYES[p.dye] ? p.dye : 'white'; } return 'white'; }
+function rankToast(before){ const a = rankOf(before), b = rankOf(prog.rp); if (b.i > a.i) showToast('Ranked up: ' + b.name + '!'); }
+
+// every throw, catch and finished game counts toward your stats; online games move your rank
+let shotSeen = '', statsFor = null, bankTaken = null, lastRP = null, gamePlops = {gid: null, n: 0};
+function trackStats(){
+  if (!G || spectator || mode === 'local' || !G.gid) return;
+  const st = prog.stats, s = G.shot; let dirty = false;
+  if (G.bankUsed && G.bankUsed[myId] && bankTaken !== G.gid) { bankTaken = G.gid; const k = G.bankUsed[myId]; if (prog.bank[k] > 0) prog.bank[k]--; dirty = true; }
+  if (s && G.phase === 'result' && shotSeen !== G.gid + ':' + s.id) {
+    shotSeen = G.gid + ':' + s.id; dirty = true;
+    if (s.pid === myId) {
+      st.shots++;
+      if (s.out === 'sink') { st.plops++; if (gamePlops.gid !== G.gid) gamePlops = {gid: G.gid, n: 0}; gamePlops.n++; if (s.redemption) st.redemptions++; }
+      else if (s.out === 'plink') st.plinks++;
+      else if (s.out === 'table' && s.res === 'drop') st.hits++;
+    } else if (s.cby === myId) { if (s.res === 'caught') st.catches++; else if (s.res === 'fifa') st.fifas++; }
+  }
+  if (G.phase === 'over' && statsFor !== G.gid) {
+    statsFor = G.gid; dirty = true;
+    const won = G.winner === mySide, online = mode === 'host' || mode === 'guest';
+    st.games++; st.points += G.score[mySide] | 0;
+    if (won) { st.wins++; st.streak++; st.best = Math.max(st.best, st.streak); } else { st.losses++; st.streak = 0; }
+    if (online) { st.onGames++; if (won) st.onWins++; }
+    const pl = gamePlops.gid === G.gid ? gamePlops.n : 0;
+    let rp = 0;
+    if (online) rp = won ? 25 + Math.min(15, 3 * pl) : -12;
+    else if (!G.tourney && won) rp = ({easy: 1, medium: 3, hard: 6})[G.cpu] || 0;
+    if (rp) { const before = prog.rp; prog.rp = Math.max(0, prog.rp + rp); lastRP = {gid: G.gid, rp: prog.rp - before}; rankToast(before); }
+  }
+  if (dirty) saveProg();
+}
+
+// ---------- tournaments: single elimination against CPU rivals ----------
+const RIVALS = ['Chad','Brody','Tanner','Colt','Jax','Hunter','Trey','Blake','Cole','Wyatt','Beau','Gunnar','Knox','Ryder','Pierce','Tate','Reid','Duke','Maverick','Sully','Deacon','Chase','Brock','Rhett','Grady','Walker','Bennett','Hayes','Cash','Boone'];
+const TOUR = {
+  minor: {size: 8,  entries: 3, rounds: ['Quarterfinal','Semifinal','Final'], skill: [['easy','medium'], ['medium','hard'], ['hard']], to: [7, 7, 7]},
+  major: {size: 16, entries: 2, rounds: ['Round of 16','Quarterfinal','Semifinal','Final'], skill: [['medium'], ['medium','hard'], ['hard'], ['pro']], to: [7, 7, 7, 11]},
+};
+const PRIZES = {
+  minor: {1: {pu: 2, dye: true, xp: 150, rp: 60}, 2: {xp: 60, rp: 25}, 3: {xp: 30, rp: 10}, 5: {xp: 15}},
+  major: {1: {pu: 4, dye: true, xp: 400, rp: 200}, 2: {pu: 2, xp: 150, rp: 100}, 3: {xp: 80, rp: 50}, 5: {xp: 40, rp: 20}, 9: {xp: 20}},
+};
+let T = null, tourFor = null;
+try { const t = JSON.parse(localStorage.getItem('bd-tour') || 'null'); if (t && t.v === 1 && Array.isArray(t.rounds) && t.ev && TOUR[t.ev.kind]) T = t; } catch(e){}
+function saveTour(){ try { if (T) localStorage.setItem('bd-tour', JSON.stringify(T)); else localStorage.removeItem('bd-tour'); } catch(e){} }
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pickOne = a => a[Math.floor(Math.random() * a.length)];
+function tourStale(){ if (!T) return false; if (T.ev.kind === 'minor') return T.ev.id !== todaysMinor().id; const m = allMajors().find(m => m.id === T.ev.id); return !m || majorState(m) === 'past'; }
+const liveRun = () => !!(T && !T.done && !tourStale());
+const entriesLeft = ev => ownerMode ? Infinity : Math.max(0, TOUR[ev.kind].entries - ((prog.tour[ev.id] || {}).entries | 0));
+function pairUp(ids, kind, r){ const out = []; for (let i = 0; i < ids.length; i += 2) out.push({a: ids[i], b: ids[i + 1], w: null, sc: null, skill: pickOne(TOUR[kind].skill[r])}); return out; }
+function enterTour(ev){
+  if (liveRun()) { showBracket(); return; }
+  if (entriesLeft(ev) <= 0) return;
+  const cfg = TOUR[ev.kind], rec = prog.tour[ev.id] = prog.tour[ev.id] || {entries: 0, won: false};
+  rec.entries++;
+  const players = {me: {name: nameOr(), dye: myDye()}}, dyeKeys = Object.keys(DYES);
+  shuffle(RIVALS).slice(0, cfg.size - 1).forEach((n, i) => { players['r' + i] = {name: n, dye: Math.random() < 0.45 ? 'white' : pickOne(dyeKeys)}; });
+  T = {v: 1, ev: {id: ev.id, kind: ev.kind, name: ev.name, dye: ev.dye}, players, round: 0, rounds: [pairUp(shuffle(Object.keys(players)), ev.kind, 0)], done: false, place: 0, prize: null};
+  saveTour(); saveProg(); showBracket();
+}
+const myMatch = () => T && !T.done ? T.rounds[T.round].find(m => (m.a === 'me' || m.b === 'me') && !m.w) : null;
+function playTour(){
+  const m = myMatch(); if (!m) return;
+  const cfg = TOUR[T.ev.kind], opp = T.players[m.a === 'me' ? m.b : m.a];
+  $('bracket').hidden = true;
+  mode = 'cpu'; mySide = 'A'; spectator = false; myId = 'me'; setStatus('cpu');
+  G = newGame({A: [{id: 'me', name: nameOr(), dye: myDye()}], B: [{id: 'cpu', name: opp.name, dye: opp.dye}]}, cfg.to[T.round], '1v1');
+  G.cpu = m.skill; G.tourney = {ev: T.ev.id, round: T.round, last: T.round === cfg.rounds.length - 1};
+  showGame(); onState();
+}
+function tourGameOver(){
+  if (!G || !G.tourney || tourFor === G.gid || !T || T.done || T.ev.id !== G.tourney.ev) return;
+  tourFor = G.gid;
+  tourResult(G.winner === mySide, [G.score.A, G.score.B]);
+}
+const simMatch = m => { if (!m.w) m.w = Math.random() < 0.5 ? m.a : m.b; };
+function tourResult(won, sc){
+  const m = myMatch(); if (!m) return;
+  const cfg = TOUR[T.ev.kind], N = cfg.rounds.length;
+  m.w = won ? 'me' : (m.a === 'me' ? m.b : m.a); m.sc = sc;
+  T.rounds[T.round].forEach(simMatch);
+  if (won && T.round === N - 1) { T.done = true; T.place = 1; }
+  else if (won) { T.round++; T.rounds.push(pairUp(T.rounds[T.round - 1].map(x => x.w), T.ev.kind, T.round)); }
+  else {
+    T.done = true; T.place = T.round === N - 1 ? 2 : Math.pow(2, N - 1 - T.round) + 1;
+    while (T.round < N - 1) { T.round++; const nx = pairUp(T.rounds[T.round - 1].map(x => x.w), T.ev.kind, T.round); nx.forEach(simMatch); T.rounds.push(nx); }
+  }
+  if (T.done) givePrize();
+  saveTour(); saveProg();
+}
+function givePrize(){
+  if (T.prize) return;
+  const pz = PRIZES[T.ev.kind][T.place] || {xp: 10}, lines = [];
+  for (let i = 0; i < (pz.pu || 0); i++) { const opts = PU_KEYS.filter(k => prog.bank[k] < BANK_MAX); if (!opts.length) break; const k = pickOne(opts); prog.bank[k]++; lines.push(PU[k].name + ' power-up for your bank'); }
+  if (pz.dye && T.ev.dye) {
+    if (!prog.dyes.includes(T.ev.dye)) { prog.dyes.push(T.ev.dye); lines.push(DYES[T.ev.dye].name + ' dye (equip it under Play)'); }
+    else lines.push(DYES[T.ev.dye].name + ' dye (already yours)');
+  }
+  if (pz.rp) { const b = prog.rp; prog.rp += pz.rp; lines.push('+' + pz.rp + ' rank points'); rankToast(b); }
+  if (pz.xp) { const before = myLevel(); prog.xp += pz.xp; lines.push('+' + pz.xp + ' XP'); if (myLevel() > before) showToast('Level up! You’re level ' + myLevel()); }
+  if (T.place === 1) { prog.stats[T.ev.kind === 'major' ? 'majorWins' : 'minorWins']++; (prog.tour[T.ev.id] = prog.tour[T.ev.id] || {entries: 1}).won = true; }
+  T.prize = lines;
+  renderLevel(); renderDyes();
+}
+const placeText = p => p === 1 ? 'Champion' : p === 2 ? 'Runner-up' : 'Top ' + (p === 3 ? 4 : p === 5 ? 8 : 16);
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function showBracket(){
+  if (!T) return;
+  const cfg = TOUR[T.ev.kind], N = cfg.rounds.length, m = myMatch();
+  $('lobby').hidden = true; $('bracket').hidden = false; $('bracket').scrollTop = 0;
+  $('brKind').textContent = (T.ev.kind === 'major' ? 'Major' : 'Minor Cup') + ' · ' + cfg.size + ' players';
+  $('brTitle').textContent = T.ev.name;
+  $('brSub').textContent = T.done ? (T.place === 1 ? 'You won the whole thing.' : 'Knocked out · ' + placeText(T.place)) : cfg.rounds[T.round] + ' · first to ' + cfg.to[T.round] + ' · lose once and you’re out';
+  const pz = $('brPrize'); pz.innerHTML = '';
+  if (T.done && T.prize) {
+    const c = el('div', 'champ'); c.appendChild(el('h3', null, T.place === 1 ? 'Champion' : 'Your prizes'));
+    const ul = el('ul'); (T.prize.length ? T.prize : ['Thanks for playing']).forEach(t => ul.appendChild(el('li', null, t))); c.appendChild(ul); pz.appendChild(c);
+  }
+  const btns = $('brBtns'); btns.innerHTML = '';
+  if (m) {
+    const opp = T.players[m.a === 'me' ? m.b : m.a];
+    const go = el('button', 'btn-main', 'Play ' + cfg.rounds[T.round] + ' vs ' + opp.name); go.style.background = 'var(--gold)'; go.style.color = '#1a1206'; go.addEventListener('click', playTour);
+    const back = el('button', 'btn-sec', 'Menu'); back.addEventListener('click', closeBracket);
+    btns.append(go, back);
+  } else {
+    const done = el('button', 'btn-main', 'Done'); done.addEventListener('click', () => { T = null; saveTour(); closeBracket(); });
+    btns.appendChild(done);
+  }
+  const body = $('brBody'); body.innerHTML = '';
+  for (let r = 0; r < N; r++) {
+    const sec = el('div', 'br-round'); sec.appendChild(el('h4', null, cfg.rounds[r]));
+    const list = T.rounds[r] || Array.from({length: cfg.size / Math.pow(2, r + 1)}, () => null);
+    list.forEach(x => {
+      const row = el('div', 'match' + (x && (x.a === 'me' || x.b === 'me') ? ' mine' : ''));
+      if (!x) { row.append(el('span', 'tbd', 'TBD'), el('em', null, ''), el('span', 'tbd', 'TBD'), el('em', null, '')); }
+      else [x.a, x.b].forEach((id, k) => {
+        const nm = id === 'me' ? 'You' : T.players[id].name;
+        row.appendChild(el('span', (id === 'me' ? 'me ' : '') + (x.w ? (x.w === id ? 'w' : 'l') : ''), nm + (x.w === id ? ' ✓' : '')));
+        const sc = x.sc ? (id === 'me' ? x.sc[0] : x.sc[1]) : '';
+        row.appendChild(el('em', null, x.sc ? String(sc) : ''));
+      });
+      sec.appendChild(row);
+    });
+    body.appendChild(sec);
+  }
+}
+function closeBracket(){ $('bracket').hidden = true; if (!mode) { $('lobby').hidden = false; selectTab('paneCompete'); } }
+function selectTab(id){ const t = document.querySelector('.tab[data-pane="' + id + '"]'); if (t) t.click(); }
+
+// ---------- menu screens ----------
+function swatch(k){ const s = el('i', 'sw'); const D = DYES[k] || DYES.white; s.style.background = 'linear-gradient(135deg,' + D.base[0] + ',' + D.base[1] + ')'; return s; }
+function rankBlock(box, r){
+  const pct = r.next ? Math.min(100, (prog.rp - r.lo) / (r.next[1] - r.lo) * 100) : 100;
+  box.innerHTML = '<svg viewBox="0 0 58 64" aria-hidden="true"><path d="M29 2 54 12v20c0 15-11 25-25 30C15 57 4 47 4 32V12z" fill="' + r.color + '" stroke="rgba(0,0,0,.35)" stroke-width="2"/><path d="M29 12 44 18v13c0 9-6 15-15 19-9-4-15-10-15-19V18z" fill="rgba(0,0,0,.16)"/><text x="29" y="39" text-anchor="middle" font-family="Big Shoulders Display, sans-serif" font-weight="900" font-size="19" fill="rgba(0,0,0,.62)">' + (r.i + 1) + '</text></svg>'
+    + '<div class="rt"><small>' + (currentSeason() ? currentSeason().name + ' rank' : 'Rank') + '</small><b style="color:' + r.color + '">' + r.name + '</b><div class="xpbar"><i style="width:' + pct.toFixed(1) + '%;background:' + r.color + '"></i></div><small>' + (prog.rp | 0) + ' RP' + (r.next ? ' · ' + r.next[0] + ' at ' + r.next[1] : ' · top rank') + '</small></div>';
+}
+function tourCard(box, ev, state){
+  box.innerHTML = '';
+  const cfg = TOUR[ev.kind], left = entriesLeft(ev), rec = prog.tour[ev.id] || {};
+  const h = el('div', 'tour-h');
+  const tag = el('span', 'tag' + (ev.kind === 'major' ? ' major' : ''), ev.kind === 'major' ? 'Major' : 'Minor Cup'); h.appendChild(tag);
+  if (state === 'live') h.appendChild(el('span', 'tag live', 'Live'));
+  if (rec.won) h.appendChild(el('span', 'tag', 'Won'));
+  box.appendChild(h);
+  box.appendChild(el('h2', null, ev.name));
+  box.appendChild(el('p', 'hint', (ev.kind === 'minor' ? 'Today only' : state === 'live' ? 'Live through ' + fmtDay(ev.end) : fmtDay(ev.start) + ' – ' + fmtDay(ev.end) + ' · in ' + daysTo(ev.start) + ' day' + (daysTo(ev.start) === 1 ? '' : 's'))
+    + ' · ' + cfg.size + ' players · ' + cfg.rounds.length + ' rounds · final to ' + cfg.to[cfg.to.length - 1]));
+  const pr = el('div', 'prize'); pr.appendChild(swatch(ev.dye));
+  const t = el('span'); t.appendChild(el('b', null, 'Win: ')); t.appendChild(document.createTextNode(PRIZES[ev.kind][1].pu + ' bank power-ups + ' + DYES[ev.dye].name + ' dye' + (ownsDye(ev.dye) ? ' (yours)' : '')));
+  pr.appendChild(t); box.appendChild(pr);
+  const b = el('button', 'btn-main');
+  if (liveRun() && T.ev.id === ev.id) { const m = myMatch(); b.textContent = 'Resume · ' + TOUR[T.ev.kind].rounds[T.round] + (m ? ' vs ' + T.players[m.a === 'me' ? m.b : m.a].name : ''); b.addEventListener('click', showBracket); }
+  else if (liveRun()) { b.textContent = 'Finish your other run first'; b.disabled = true; }
+  else if (state !== 'live' && !ownerMode) { b.textContent = 'Opens ' + fmtDay(ev.start); b.disabled = true; }
+  else if (left <= 0) { b.textContent = 'No entries left' + (ev.kind === 'minor' ? ' today' : ''); b.disabled = true; }
+  else { b.textContent = 'Enter' + (left === Infinity ? (state !== 'live' ? ' · owner preview' : '') : ' · ' + left + (left === 1 ? ' entry' : ' entries') + ' left'); b.addEventListener('click', () => enterTour(ev)); }
+  if (!b.disabled) { b.style.background = 'var(--gold)'; b.style.color = '#1a1206'; }
+  box.appendChild(b);
+}
+function renderCompete(){
+  fixProg();
+  if (T && tourStale()) { T = null; saveTour(); }
+  const S = currentSeason();
+  $('seasonName').textContent = S ? S.name + ' · ' + S.sub : 'Off-season';
+  $('seasonLeft').textContent = S ? (daysTo(S.end) <= 0 ? 'Ends today' : 'Ends in ' + daysTo(S.end) + ' days') : 'The next season is on the way';
+  rankBlock($('seasonRank'), rankOf(prog.rp));
+  tourCard($('minorCard'), todaysMinor(), 'live');
+  const majors = S ? S.majors.map(m => Object.assign({kind: 'major'}, m)) : [];
+  const mj = majors.find(m => majorState(m) === 'live') || majors.find(m => majorState(m) === 'upcoming');
+  const mc = $('majorCard');
+  if (mj) tourCard(mc, mj, majorState(mj));
+  else { mc.innerHTML = ''; mc.appendChild(el('h2', null, 'Majors')); mc.appendChild(el('p', 'hint', 'No more Majors this season. Rank points still count until it ends.')); }
+  const list = $('majorList'); list.innerHTML = '';
+  if (!majors.length) list.appendChild(el('p', 'empty', 'The schedule for next season is coming.'));
+  majors.forEach(m => {
+    const st = majorState(m), won = (prog.tour[m.id] || {}).won, row = el('div', 'sched-row');
+    row.appendChild(swatch(m.dye));
+    const mid = el('div', null, m.name); mid.appendChild(el('small', null, fmtDay(m.start) + ' – ' + fmtDay(m.end) + ' · ' + DYES[m.dye].name + ' dye')); row.appendChild(mid);
+    row.appendChild(el('span', 'st' + (won ? ' won' : st === 'live' ? ' live' : ''), won ? 'Won' : st === 'live' ? 'Live' : st === 'past' ? 'Ended' : 'In ' + daysTo(m.start) + 'd'));
+    list.appendChild(row);
+  });
+  const bank = $('bankList'); bank.innerHTML = '';
+  if (!bankTotal()) bank.appendChild(el('p', 'empty', 'Win a tournament to fill your bank. You can use one banked power-up per game.'));
+  PU_KEYS.filter(k => prog.bank[k] > 0).forEach(k => { const p = el('div', 'pill'); p.append(el('b', null, '×' + prog.bank[k]), el('span', null, PU[k].name)); bank.appendChild(p); });
+}
+function renderStats(){
+  fixProg();
+  rankBlock($('rankBox'), rankOf(prog.rp));
+  const st = prog.stats, g = $('statsGrid'); g.innerHTML = '';
+  [['Games', st.games], ['Wins', st.wins], ['Win %', st.games ? Math.round(st.wins / st.games * 100) + '%' : '–'],
+   ['Plops', st.plops, 1], ['Plinks', st.plinks], ['Catches', st.catches],
+   ['FIFAs', st.fifas], ['Points', st.points], ['Best streak', st.best],
+   ['Redemptions', st.redemptions], ['Minor wins', st.minorWins, 1], ['Major wins', st.majorWins, 1]].forEach(([l, v, hot]) => {
+    const d = el('div', 'stat' + (hot ? ' hot' : '')); d.append(el('b', null, String(v)), el('span', null, l)); g.appendChild(d);
+  });
+  loadBoard();
+}
+async function loadBoard(){
+  const box = $('lbList'), S = currentSeason();
+  $('lbHint').textContent = S ? S.name + ' · top 50' : '';
+  const msg = t => { box.innerHTML = ''; box.appendChild(el('p', 'empty', t)); };
+  if (!S) return msg('The leaderboard opens with the next season.');
+  if (!fbDb) return msg('The leaderboard needs accounts, which aren’t set up here.');
+  if (!box.children.length || box.textContent === 'Loading…') msg('Loading…');
+  try {
+    const snap = await fbDb.collection('seasons').doc(S.id).collection('leaderboard').orderBy('rp', 'desc').limit(50).get();
+    box.innerHTML = ''; let n = 0, meIn = false;
+    snap.forEach(doc => {
+      const d = doc.data() || {}, rp = Math.max(0, d.rp | 0), mine = fbUser && doc.id === fbUser.uid; n++; if (mine) meIn = true;
+      const row = el('div', 'lb-row' + (mine ? ' me' : ''));
+      const who = el('div', 'who'); who.append(el('span', null, clean(d.name || 'Player').slice(0, 16) + (mine ? ' (you)' : '')), el('small', null, rankOf(rp).name + ' · Lv ' + Math.max(1, d.lvl | 0) + ' · ' + (d.plops | 0) + ' plops'));
+      row.append(el('span', 'n', String(n)), who, el('span', 'rp', String(rp)));
+      box.appendChild(row);
+    });
+    if (!n) msg('Nobody’s on the board yet. Win an online game to be first.');
+    if (!fbUser) box.appendChild(el('p', 'note', 'Sign in to get on the board.'));
+    else if (!meIn && n) box.appendChild(el('p', 'note', 'You: ' + (prog.rp | 0) + ' RP. Climb into the top 50 to show up here.'));
+  } catch(e) { msg('The leaderboard isn’t switched on yet.'); }
+}
+function dyeHow(k){
+  const i = MINORS.findIndex(m => m[1] === k); if (i >= 0) return 'Win the ' + MINORS[i][0] + ' (' + WEEKDAYS[i] + 's)';
+  const S = currentSeason(), m = (S ? S.majors : []).find(m => m.dye === k) || allMajors().find(m => m.dye === k);
+  return m ? 'Win the ' + m.name : 'Locked';
+}
+function renderDyes(){
+  const box = $('dyes'); if (!box) return; box.innerHTML = '';
+  Object.keys(DYES).forEach(k => {
+    const ok = ownsDye(k), on = k === myDye(), b = el('button', 'arena' + (on ? ' on' : '')); b.type = 'button'; b.disabled = !ok; b.setAttribute('aria-pressed', String(on));
+    b.append(swatch(k), el('b', null, DYES[k].name), el('span', null, ok ? (on ? 'Equipped' : 'Tap to use') : dyeHow(k)));
+    b.addEventListener('click', () => { prog.dye = k; saveProg(); renderDyes(); });
+    box.appendChild(b);
+  });
+}
+renderDyes();
+
 // ---------- camera ----------
 const GAME_CAM = {pos: G2W(0, -1.375, 1.375), look: G2W(0, 0.375, -0.075)};   // ~15 ft back, 8 ft up
 let camBlend = 0;
@@ -1474,8 +1963,10 @@ function frame(now){
   }
   for (let i=drops.length-1;i>=0;i--){ const m = drops[i]; m.userData.t += dt; m.userData.v.y -= 9*dt; m.position.addScaledVector(m.userData.v, dt);
     if (m.userData.t > 0.9 || m.position.y < TH) { scene.remove(m); drops.splice(i,1); } }
+  const dk = d && G && G.shot ? dyeOfSeat(G.shot.pid) : die.userData.dye;
+  if (die.userData.dye !== dk) { die.userData.dye = dk; die.material = dyeMats(dk); die.userData.gold = null; sceneDirty = 2; }
   const gold = !!(d && G && G.shot && G.shot.mult > 1);
-  if (die.userData.gold !== gold) { die.userData.gold = gold; die.material.forEach(m => { m.emissive.setHex(gold ? 0x6a4300 : 0x000000); }); }
+  if (die.userData.gold !== gold) { die.userData.gold = gold; die.material.forEach(m => { m.emissive.setHex(gold ? 0x6a4300 : ((DYES[dk] && DYES[dk].glow) || 0)); }); }
   // only redraw the 3D scene when something in it changes; the lobby pan runs at 30 fps
   const wobbling = cups.some(c => c.g.rotation.z !== 0);
   const bigMoment = inGame && G && ((G.phase === 'result' && (G.tone === 'good' || G.tone === 'great')) || G.phase === 'over');
@@ -1556,22 +2047,58 @@ function showLobby(){
 }
 $('cpuBtn').addEventListener('click', () => {
   mode = 'cpu'; mySide = 'A'; spectator = false; myId = 'me'; setStatus('cpu');
-  G = newGame({A: [{id:'me', name: nameOr()}], B: [{id:'cpu', name: CPU_LEVELS[cpuLevel].label}]}, gameTo, '1v1'); showGame(); onState();
+  G = newGame({A: [{id:'me', name: nameOr(), dye: myDye()}], B: [{id:'cpu', name: CPU_LEVELS[cpuLevel].label}]}, gameTo, '1v1'); G.cpu = cpuLevel; showGame(); onState();
 });
 let gameFmt = '1v1', gameVis = 'public';
 try { if (localStorage.getItem('bd-fmt') === '2v2') gameFmt = '2v2'; if (localStorage.getItem('bd-vis') === 'private') gameVis = 'private'; } catch(e){}
 setupSeg('fmtSeg', () => gameFmt, v => { gameFmt = v === '2v2' ? '2v2' : '1v1'; try { localStorage.setItem('bd-fmt', gameFmt); } catch(e){} });
 setupSeg('visSeg', () => gameVis, v => { gameVis = v === 'private' ? 'private' : 'public'; try { localStorage.setItem('bd-vis', gameVis); } catch(e){} });
-$('leaveBtn').addEventListener('click', () => { if (G && G.phase === 'over') betweenGames(leaveGame); else leaveGame(); });
+$('leaveBtn').addEventListener('click', () => {
+  if (G && G.tourney && G.phase !== 'over') {   // leaving a tournament match forfeits it
+    askBox('Tournament', 'Forfeit this match?', 'Leaving now counts as a loss and knocks you out.', [
+      ['Forfeit', 'btn-main', () => { if (G && G.tourney && tourFor !== G.gid) { tourFor = G.gid; tourResult(false, [G.score.A, G.score.B]); } leaveGame(); showBracket(); }],
+      ['Keep playing', 'btn-sec', null]]);
+    return;
+  }
+  if (G && G.tourney) { betweenGames(() => { leaveGame(); showBracket(); }); return; }
+  if (G && G.phase === 'over') betweenGames(leaveGame); else leaveGame();
+});
 function leaveGame(){
   const gr = gameRoom; gameRoom = null; guestPeer = null;
   if (gr) gr.leave().catch(()=>{});
   if (lobbyRoom) lobbyRoom.presence({hosting:null, open:null, fmt:null, filled:null, need:null, players:null, target:null, challenge:null}).catch(()=>{});
-  pendingChallenge = null; $('chatPanel').hidden = true;
+  pendingChallenge = null; $('chatPanel').hidden = true; hidePicker();
   hostCode = null; showLobby();
 }
 
 // ---------- online ----------
+// ---------- 2v2 teammate picker ----------
+let pickerAct = null, pickerShown = null, pickerTick = null, pickerSig = '';
+function mateIn(pk, id){ const A = ['host', pk.mate]; const team = A.includes(id) ? A : pk.players.map(p => p.id).filter(x => !A.includes(x)); return team.find(x => x !== id) || null; }
+function showPicker(pk){
+  const sig = JSON.stringify([pk, myId]); if (sig === pickerSig && !$('picker').hidden) return;   // only rebuild when something changed, so taps aren't lost
+  pickerSig = sig; pickerShown = pk; $('picker').hidden = false; setBanner(''); $('status').textContent = '';
+  const me = myId, inIt = pk.players.some(p => p.id === me), mate = inIt ? mateIn(pk, me) : null;
+  const nm = id => { const p = pk.players.find(p => p.id === id); return p ? clean(p.name).slice(0,16) : 'Player'; };
+  const list = $('pkList'); list.innerHTML = '';
+  if (inIt) pk.players.filter(p => p.id !== me).forEach(p => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = p.id === mate ? 'on' : '';
+    const n = document.createElement('span'); n.textContent = nm(p.id); const sm = document.createElement('small'); sm.textContent = p.id === mate ? 'Your teammate' : 'Team up';
+    b.append(n, sm); b.addEventListener('click', () => { if (pickerAct) pickerAct.pick(p.id); }); list.appendChild(b);
+  });
+  const A = ['host', pk.mate], B = pk.players.map(p => p.id).filter(x => !A.includes(x)), rd = new Set(pk.ready || []);
+  const box = $('pkTeams'); box.innerHTML = '';
+  const team = ids => { const d = document.createElement('div'); if (ids.includes(me)) d.className = 'mine';
+    ids.forEach(id => { const s = document.createElement('span'); s.textContent = (id === me ? 'You' : nm(id)) + (rd.has(id) ? ' ✓' : ''); if (rd.has(id)) s.className = 'rdy'; d.appendChild(s); }); return d; };
+  const vs = document.createElement('i'); vs.textContent = 'vs';
+  box.append(team(A), vs, team(B));
+  const r = $('pkReady'); r.hidden = !inIt; r.disabled = rd.has(me); r.textContent = rd.has(me) ? 'Ready ✓ · waiting for the rest' : 'Ready';
+  const tick = () => { if (!pickerShown) return; const left = Math.max(0, Math.ceil((pickerShown.ends - Date.now()) / 1000)); $('pkTimer').textContent = 'Starts when everyone is ready, or in ' + left + 's'; };
+  tick(); clearInterval(pickerTick); pickerTick = setInterval(tick, 500);
+}
+function hidePicker(){ pickerShown = null; pickerAct = null; pickerSig = ''; clearInterval(pickerTick); $('picker').hidden = true; }
+$('pkReady').addEventListener('click', () => { if (pickerAct) pickerAct.ready(); });
+
 function code4(){ const a='ABCDEFGHJKMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<4;i++) s+=a[Math.floor(Math.random()*a.length)]; return s; }
 function waitingScreen(text, names, need){
   $('nmMe').textContent = 'You'; $('scMe').textContent = '0';
@@ -1603,7 +2130,39 @@ async function hostGame(opts){
   let lastAd = '', lastWait = '';     // only publish when something changed, never in a loop
   const advertise = (names) => { const filled = names.length; const ad = {hosting: pub ? hostCode : null, name: nameOr(), open: pub && filled < need + 1, fmt, target: gameTo, filled, need: need + 1, players: names};
     const k = JSON.stringify(ad); if (k !== lastAd) { lastAd = k; room.presence(ad).catch(()=>{}); } };
-  const announceWait = (names) => { const k = JSON.stringify(names); if (k !== lastWait) { lastWait = k; gameRoom.presence({wait:{fmt, names, need: need + 1}}).catch(()=>{}); } };
+  const announceWait = (names, pk) => { const k = JSON.stringify([names, pk || null]); if (k !== lastWait) { lastWait = k; gameRoom.presence({wait:{fmt, names, need: need + 1, pick: pk || null}}).catch(()=>{}); } };
+  // 2v2: everyone picks a teammate on a lobby screen first; it starts when all four are ready or after 30 seconds
+  const myRoom = gameRoom;
+  let pick = null, lastSeated = [], lastNames = [];
+  const endPick = () => { if (pick) clearTimeout(pick.timer); pick = null; hidePicker(); };
+  const nameFor = id => id === 'host' ? nameOr() : ((lastSeated.find(p => p.id === id) || {}).name || 'Player');
+  const pickView = () => pick && {players: pick.ids.map(id => ({id, name: nameFor(id)})), mate: pick.mate, ready: [...pick.ready], ends: pick.ends};
+  const applyPick = (by, w) => {
+    if (!pick || by === w || !pick.ids.includes(by) || !pick.ids.includes(w)) return;
+    pick.mate = by === 'host' ? w : w === 'host' ? by : pick.ids.find(x => x !== 'host' && x !== by && x !== w);
+    pick.ready = new Set();
+  };
+  const begin = () => {
+    if (G || gameRoom !== myRoom || lastSeated.length < need) return;
+    const me = {id:'host', name: nameOr(), dye: myDye()}, all = [me, ...lastSeated];
+    let seats;
+    if (fmt === '2v2') {
+      const mate = all.find(p => pick && p.id === pick.mate && p.id !== 'host') || lastSeated[1];
+      seats = {A: [me, mate], B: all.filter(p => p !== me && p !== mate)};
+    } else seats = {A: [me], B: [lastSeated[0]]};
+    endPick();
+    G = newGame(seats, gameTo, fmt);
+    advertise(lastNames);
+    if (pendingChallenge) { pendingChallenge = null; room.presence({challenge: null}).catch(()=>{}); }
+    setStatus('playing');
+    commit();
+  };
+  const refreshPick = () => {
+    if (!pick) return;
+    if (pick.ready.size >= 4) { begin(); return; }
+    announceWait(lastNames, pickView()); showPicker(pickView());
+    pickerAct = {pick: id => { applyPick('host', id); refreshPick(); }, ready: () => { if (pick) { pick.ready.add('host'); refreshPick(); } }};
+  };
   gameRoom.presence({role:'host', name: nameOr(), game:null, wait:{fmt, names:[nameOr()], need: need + 1}}).catch(()=>{});
   advertise([nameOr()]);
   showGame(); waitingScreen(null, [nameOr()], need + 1);
@@ -1623,18 +2182,22 @@ async function hostGame(opts){
       }
     }
     if (!G) {
-      const seated = order.slice(0, need).map(id => ({id, name: clean(byId(id).presence.name || 'Guest').slice(0,16)}));
+      const seated = order.slice(0, need).map(id => { const pr = byId(id).presence; return {id, name: clean(pr.name || 'Guest').slice(0,16), dye: DYES[pr.dye] ? pr.dye : 'white'}; });
       const names = [nameOr(), ...seated.map(p => p.name)];
-      announceWait(names);
+      lastSeated = seated; lastNames = names;
       advertise(names);
-      if (seated.length < need) { waitingScreen(pendingChallenge ? 'Challenge sent to ' + pendingChallenge.name + '. Waiting for them to accept…' : null, names, need + 1); return; }
-      const me = {id:'host', name: nameOr()};
-      const seats = fmt === '2v2' ? {A: [me, seated[1]], B: [seated[0], seated[2]]} : {A: [me], B: [seated[0]]};
-      G = newGame(seats, gameTo, fmt);
-      advertise(names);
-      if (pendingChallenge) { pendingChallenge = null; room.presence({challenge: null}).catch(()=>{}); }
-      setStatus('playing');
-      commit();
+      if (seated.length < need) { endPick(); announceWait(names); waitingScreen(pendingChallenge ? 'Challenge sent to ' + pendingChallenge.name + '. Waiting for them to accept…' : null, names, need + 1); return; }
+      if (fmt === '2v2') {
+        const ids = ['host', ...seated.map(p => p.id)];
+        if (!pick || pick.ids.join() !== ids.join()) { endPick(); pick = {ids, mate: seated[1].id, ready: new Set(), ends: Date.now() + 30000}; pick.timer = setTimeout(begin, 30000); }
+        guests.forEach(p => { const it = p.presence.intent;
+          if (it && typeof it.seq === 'number' && it.seq > (lastIntents[p.peer] || 0) && (it.type === 'pick' || it.type === 'ready')) {
+            lastIntents[p.peer] = it.seq;
+            if (it.type === 'pick') applyPick(p.peer, String(it.with)); else if (pick.ids.includes(p.peer)) pick.ready.add(p.peer);
+          } });
+        refreshPick();
+        if (!G) return;
+      } else begin();
     }
     guests.forEach(p => { if (teamOf(p.peer)) handleIntent(p.presence.intent, p.peer); });
   });
@@ -1647,7 +2210,7 @@ async function joinGame(code){
   catch(e){ $('netNote').textContent = 'Couldn’t join that game right now. Try again in a moment.'; return; }
   mode = 'guest'; mySide = 'B'; spectator = false; G = null; myId = '';
   chats.game = []; myChat.game = []; renderChat('game'); setStatus('playing');
-  gameRoom.presence({role:'guest', name: nameOr(), intent:null}).catch(()=>{});
+  gameRoom.presence({role:'guest', name: nameOr(), dye: myDye(), intent:null}).catch(()=>{});
   showGame();
   setBanner('Joining ' + code, ''); $('status').textContent = 'Connecting…';
   let sawHost = false;
@@ -1662,10 +2225,16 @@ async function joinGame(code){
     if (!g || typeof g !== 'object' || !g.score || !g.seats) {
       const w = host.presence.wait;
       if (G) { G = null; D = null; clearTimers(); }
+      if (w && w.pick && Array.isArray(w.pick.players)) {
+        pickerAct = {pick: id => sendIntent('pick', {with: id}), ready: () => sendIntent('ready', {})};
+        setBanner(''); $('status').textContent = ''; showPicker(w.pick); return;
+      }
+      hidePicker();
       setBanner('Get ready', w && w.fmt ? w.fmt + ' game' : '');
       $('status').textContent = w && Array.isArray(w.names) ? 'Players ' + w.names.length + '/' + w.need + ': ' + w.names.map(n => String(n).slice(0,16)).join(', ') + '. Waiting…' : 'Waiting for the host…';
       return;
     }
+    hidePicker();
     const myTeam = ['A','B'].find(t => (g.seats[t] || []).some(p => p.id === myId));
     spectator = !myTeam;
     mySide = myTeam || 'A';
@@ -1704,9 +2273,11 @@ function renderGames(peers){
 document.querySelectorAll('.tab[data-pane]').forEach(t => t.addEventListener('click', () => {
   document.querySelectorAll('.tab[data-pane]').forEach(x => x.setAttribute('aria-selected', String(x === t)));
   document.querySelectorAll('.pane').forEach(p => { p.hidden = p.id !== t.dataset.pane; });
+  if (t.dataset.pane === 'paneStats') renderStats();
+  if (t.dataset.pane === 'paneCompete') renderCompete();
 }));
 let lobbyMe = null, lobbyStatus = 'menu';
-function setStatus(st){ lobbyStatus = st; if (lobbyRoom) lobbyRoom.presence({status: st, name: nameOr(), lvl: typeof myLevel === 'function' ? myLevel() : 1}).catch(()=>{}); }
+function setStatus(st){ lobbyStatus = st; if (lobbyRoom) lobbyRoom.presence({status: st, name: nameOr(), lvl: myLevel(), rk: rankOf(prog.rp).name}).catch(()=>{}); }
 const STATUS_TEXT = {menu:'In the menu', hosting:'Hosting a game', playing:'In a game', cpu:'Playing the CPU'};
 function renderOnline(peers){
   const list = peers.filter(p => p.presence && (p.presence.name || p.sameTab));
@@ -1719,7 +2290,8 @@ function renderOnline(peers){
     const nm = document.createElement('div'); nm.className = 'nm';
     const n1 = document.createElement('span'); n1.textContent = (p.sameTab ? nameOr() : clean(p.presence.name || 'Someone').slice(0,16)) + (p.sameTab ? ' (you)' : '');
     const lv = p.sameTab ? myLevel() : (+p.presence.lvl || 1);
-    const n2 = document.createElement('small'); n2.textContent = 'Lv ' + lv + ' · ' + (STATUS_TEXT[st] || 'Online');
+    const rk = p.sameTab ? rankOf(prog.rp).name : (RANKS.some(r => r[0] === p.presence.rk) ? p.presence.rk : '');
+    const n2 = document.createElement('small'); n2.textContent = (rk ? rk + ' · ' : '') + 'Lv ' + lv + ' · ' + (STATUS_TEXT[st] || 'Online');
     nm.append(n1, n2); r.append(d, nm);
     if (!p.sameTab && isBlocked(p.presence.name)) {
       const b = document.createElement('button'); b.textContent = 'Unblock'; b.className = 'btn-sec';
@@ -1832,9 +2404,10 @@ $('acctDel').addEventListener('click', () => {
       const u = fbUser;
       try {
         await fbDb.collection('users').doc(u.uid).delete().catch(()=>{});
+        await Promise.all(SEASONS.map(S => fbDb.collection('seasons').doc(S.id).collection('leaderboard').doc(u.uid).delete().catch(()=>{})));
         await u.delete();
-        prog = {xp: 0}; try { localStorage.setItem('bd-prog', JSON.stringify(prog)); localStorage.removeItem('bd-guest'); } catch(e){}
-        renderLevel(); showToast('Your account was deleted');
+        prog = {xp: 0}; fixProg(); T = null; saveTour(); try { localStorage.setItem('bd-prog', JSON.stringify(prog)); localStorage.removeItem('bd-guest'); } catch(e){}
+        renderLevel(); renderDyes(); showToast('Your account was deleted');
       } catch(err) {
         if (err && err.code === 'auth/requires-recent-login') {
           askBox('Delete account', 'Sign in again first', 'For security, sign in one more time, then tap Delete account again.', [['OK', 'btn-main', () => { fbAuth.signOut(); }]]);
@@ -1921,8 +2494,14 @@ function cloudSave(){
   saveT = setTimeout(() => {
     fbDb.collection('users').doc(fbUser.uid).set({
       name: nameOr(), xp: prog.xp | 0, arena: arenaKey, table: tableKey,
+      stats: prog.stats, bank: prog.bank, dyes: prog.dyes, dye: prog.dye, rp: prog.rp | 0, season: prog.season || null, tour: prog.tour,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, {merge: true}).catch(e => console.warn('save failed', e));
+    const S = currentSeason();   // the public season leaderboard: name, rank points, level, a couple of stats
+    if (S) fbDb.collection('seasons').doc(S.id).collection('leaderboard').doc(fbUser.uid).set({
+      name: nameOr(), rp: prog.rp | 0, lvl: myLevel(), plops: prog.stats.plops | 0, wins: prog.stats.wins | 0,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(() => {});
   }, 400);
 }
 function renderAcct(){
@@ -1959,15 +2538,24 @@ async function loadProfile(user){
   try {
     const ref = fbDb.collection('users').doc(user.uid), snap = await ref.get(), d = snap.exists ? snap.data() : {};
     // keep whichever progress is further along, so guest games before signing up aren't lost
-    prog.xp = Math.max(prog.xp | 0, d.xp | 0); try { localStorage.setItem('bd-prog', JSON.stringify(prog)); } catch(e){}
+    prog.xp = Math.max(prog.xp | 0, d.xp | 0);
+    fixProg();
+    if (d.stats) STAT_KEYS.forEach(k => { prog.stats[k] = Math.max(prog.stats[k] | 0, d.stats[k] | 0); });
+    if (d.bank) PU_KEYS.forEach(k => { prog.bank[k] = Math.min(BANK_MAX, Math.max(prog.bank[k] | 0, d.bank[k] | 0)); });
+    if (Array.isArray(d.dyes)) prog.dyes = [...new Set([...prog.dyes, ...d.dyes.filter(k => DYES[k])])];
+    if (d.dye && DYES[d.dye]) prog.dye = d.dye;
+    if (d.season && d.season === prog.season) prog.rp = Math.max(prog.rp, d.rp | 0);
+    if (d.tour && typeof d.tour === 'object') Object.entries(d.tour).forEach(([k, v]) => { if (!v || typeof v !== 'object') return; const r = prog.tour[k] = prog.tour[k] || {entries: 0, won: false}; r.entries = Math.max(r.entries | 0, v.entries | 0); r.won = !!(r.won || v.won); });
+    fixProg();
+    try { localStorage.setItem('bd-prog', JSON.stringify(prog)); } catch(e){}
     const nm = clean(d.name || pendingName || user.displayName || myName || '').slice(0,16);
     if (nm) { myName = nm; $('nameIn').value = nm; try { localStorage.setItem('bd-name', nm); } catch(e){} }
     if (d.arena && ARENAS.some(a => a.key === d.arena) && unlocked(d.arena)) arenaKey = d.arena;
     if (d.table && TABLES.some(t => t.key === d.table)) tableKey = d.table;
     try { localStorage.setItem('bd-arena', arenaKey); localStorage.setItem('bd-table', tableKey); } catch(e){}
     if (!mode) { applyArena(arenaKey); applyTable(tableKey); }
-    renderLevel(); renderTables();
-    if (lobbyRoom) lobbyRoom.presence({name: nameOr(), lvl: myLevel()}).catch(()=>{});
+    renderLevel(); renderTables(); renderDyes();
+    if (lobbyRoom) lobbyRoom.presence({name: nameOr(), lvl: myLevel(), rk: rankOf(prog.rp).name}).catch(()=>{});
   } catch(e) { console.warn('profile load failed', e); }
   cloudReady = true; pendingName = ''; cloudSave();
 }
@@ -2012,7 +2600,7 @@ $('acctBtn').addEventListener('click', () => { if (!fbAuth) return; if (fbUser) 
   fbAuth.onAuthStateChanged(user => {
     fbUser = user || null; renderAcct();
     if (user) { showAuth(false); loadProfile(user); }
-    else { cloudReady = false; ownerMode = false; if (!unlocked(arenaKey)) { arenaKey = 'basement'; if (!mode) applyArena(arenaKey); } renderLevel(); let guest = false; try { guest = localStorage.getItem('bd-guest') === '1'; } catch(e){} showAuth(!(first && guest)); }
+    else { cloudReady = false; ownerMode = false; if (!unlocked(arenaKey)) { arenaKey = 'basement'; if (!mode) applyArena(arenaKey); } renderLevel(); renderDyes(); let guest = false; try { guest = localStorage.getItem('bd-guest') === '1'; } catch(e){} showAuth(!(first && guest)); }
     first = false;
   });
 })();
@@ -2071,7 +2659,7 @@ function mqttRooms(url, prefix){
   const r = mqttRooms(BROKER, PREFIX);
   room = r; lobbyRoom = r;
   r.onPeers(ch => onLobbyPeers(ch.peers));
-  r.presence({name: nameOr(), status: 'menu'}).catch(()=>{});
+  r.presence({name: nameOr(), status: 'menu', lvl: myLevel(), rk: rankOf(prog.rp).name}).catch(()=>{});
   const note = $('netNote');
   note.textContent = 'Connecting to live play…';
   r.client.on('connect', () => { note.textContent = ''; note.style.color = ''; });

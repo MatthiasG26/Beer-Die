@@ -9,7 +9,7 @@ Everything in this repository is already set up for an iPhone app: the Xcode pro
 2. Enroll as an **Individual**. Approval usually takes 1–2 days.
 3. You can do steps 2–4 below while you wait.
 
-## 2. Update the database rules (for chat reports)
+## 2. Update the database rules (chat reports and the season leaderboard)
 Firebase console → **Firestore Database → Rules**, replace everything with this, then **Publish**:
 
 ```
@@ -22,11 +22,15 @@ service cloud.firestore {
     match /reports/{id} {
       allow create: if request.auth != null;
     }
+    match /seasons/{season}/leaderboard/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
   }
 }
 ```
 
-Reported chat messages show up under **Firestore → Data → reports**. Check them now and then; Apple requires that you respond to reports.
+The leaderboard (Stats tab) stays empty until these rules are published. Reported chat messages show up under **Firestore → Data → reports**. Check them now and then; Apple requires that you respond to reports.
 
 ## 3. Build and run it on your iPhone (Mac)
 1. Install **Xcode** from the Mac App Store (free, large download), open it once, and accept the prompts.
